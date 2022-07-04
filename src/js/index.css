@@ -1,0 +1,193 @@
+@font-face {
+  font-family: 'NotoSansCJKjp';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./font/NotoSansJP-Regular2.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NotoSansCJKjp';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./font/NotoSansJP-Bold.otf2.woff') format('woff');
+  font-display: swap;
+}
+
+html {
+  font-family: "NotoSansCJKjp", "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "メイリオ", "Meiryo", sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  /* background: linear-gradient(180deg, #fe8ad1 0%, #eaa1cd 20%, #7fd6fd 70%, #a4f1e8 100%); */
+  min-height: 100vh;
+  /* color: #737373; */
+}
+
+#root {
+  height: 100vh;
+}
+
+*:focus {
+  outline: none;
+}
+
+
+/* iOSでのデフォルトスタイルをリセット */
+
+button {
+  border-radius: 0;
+  -webkit-box-sizing: content-box;
+  -webkit-appearance: button;
+  appearance: button;
+  border: none;
+  box-sizing: border-box;
+  cursor: pointer;
+  background-color: transparent;
+  font-family: "NotoSansCJKjp", "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "メイリオ", "Meiryo", sans-serif;
+}
+
+button::-webkit-search-decoration {
+  display: none;
+}
+
+
+/* マウスオーバーで枠の色を全体に */
+
+button:focus {
+  outline-offset: -2px;
+}
+
+button:disabled {
+  cursor: initial;
+}
+
+.root {
+  justify-content: center;
+}
+
+.appver {
+  color: #a00;
+  float: right;
+  font-size: x-small;
+}
+
+.qritem {
+  background: transparent;
+  overflow: hidden;
+  min-width: 0;
+  padding: 0.2em;
+  text-align: center;
+}
+
+.swingcontent {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  grid-auto-rows: 1fr;
+  grid-gap: 0.8em;
+  border: 1px solid #ddd;
+  padding: 0.8em;
+  margin: 0 0 2em;
+}
+
+.swingitem {
+  overflow: hidden;
+  min-width: 0;
+  padding-top: 20px;
+  text-align: center;
+}
+
+select {
+  width: 8em;
+  font-size: 16px;
+  color: gray;
+}
+
+.grayImg {
+  -webkit-filter: grayscale(100%);
+  -moz-filter: grayscale(100%);
+  -ms-filter: grayscale(100%);
+  -o-filter: grayscale(100%);
+  filter: grayscale(100%);
+}
+
+.qr_reader {
+  width: 96vw;
+  margin-left: -1vw;
+  max-height: 70vh;
+}
+
+.header {
+  position: sticky;
+  /* background: linear-gradient(90deg, #fe8ae1 0%, #d79fea 23%, #aabeff 80%, #87cfed 100%); */
+  top: 0px;
+  z-index: 1;
+  /* border-left: 2px solid #fd8be2;
+  border-right: 2px solid #89ceee; */
+  padding: 0px;
+}
+
+.header-inner {
+  padding: 0px;
+  /* background: #fff; */
+  border-radius: 5px;
+  /* border: pink 1px solid; */
+}
+
+.content {
+  width: calc(100% - 2em - 2px);
+  display: grid;
+  /* 個数が少ない時に真ん中にしたいならauto-fit */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  grid-auto-rows: 1fr;
+  grid-gap: 0.8em;
+  border: 1px solid #ddd;
+  padding: 0.5em;
+  margin: 0.5em;
+  /* background: #fff; */
+  border-radius: 5px;
+}
+
+.closeButton {
+  background: #ff6eb4;
+  color: aliceblue;
+  border-radius: 20px;
+  width: 30px;
+  height: 30px;
+}
+
+.registButton {
+  background: #ff6eb4;
+  color: aliceblue;
+  border-radius: 20px;
+}
+
+.modalInner {
+  padding: 10px;
+  width: 90vw;
+  max-width: 600px;
+  min-width: 300px;
+  height: calc(90vh - 72px);
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.4)
+}
+
+.bokashi {
+  font-weight: 600 !important;
+  letter-spacing: 6px;
+  text-shadow: 3px 3px 3px #ffffff, -3px 3px 3px #ffffff, 3px -3px 3px #ffffff, -3px -3px 3px #ffffff, 3px 0px 3px #ffffff, 0px 3px 3px #ffffff, -3px 0px 3px #ffffff, 0px -3px 3px #ffffff;
+}
+
+.bokashiDark {
+  letter-spacing: 6px;
+  text-shadow: 3px 3px 3px #000000, -3px 3px 3px #000000, 3px -3px 3px #000000, -3px -3px 3px #000000, 3px 0px 3px #000000, 0px 3px 3px #000000, -3px 0px 3px #000000, 0px -3px 3px #000000;
+}
+
+.newIcon {
+  position: absolute;
+  top: 0;
+  right: -3px;
+}
