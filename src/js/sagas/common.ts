@@ -74,6 +74,22 @@ export const typeToStr = (visitor?: Visitor) => {
     case 'volunteer':
       return 'ボランティア';
     case 'visitor':
-      return '一般観客';
+      return '観客';
+    default:
+      return 'その他';
   }
+};
+
+export const converDate = (timeStr: string) => {
+  if (!timeStr) return '';
+
+  const date = new Date(timeStr);
+  const y = date.getFullYear();
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  const h = date.getHours();
+  const mm = date.getMinutes();
+  const s = date.getSeconds();
+
+  return `${y}/${m}/${d} ${h}:${mm}:${s}`;
 };

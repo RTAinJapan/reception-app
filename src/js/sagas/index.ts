@@ -1,18 +1,51 @@
-import { call, put } from 'redux-saga/effects';
+import { call, put, select, takeEvery } from 'redux-saga/effects';
 import * as actions from '../actions';
-import { Visitor } from '../types/global';
-import { fetchJson } from './common';
+import { RootState } from '../reducers';
+import { Accepted, Visitor } from '../types/global';
+import { fetchJson, postJson } from './common';
 
 export default function* rootSaga() {
+  yield takeEvery(actions.callPostReception, postReception);
+
   // DB初期設定
-  yield call(initDB);
+  yield call(initConfig);
+  yield call(updateVisitorList);
+  yield call(updateAccepted);
 }
 
-function* initDB() {
+function* initConfig() {
   try {
-    const json: Visitor[] = yield call(fetchJson, 'https://rtain.jp/api/ajax/index.php?url=https://rtain.jp/util/reception_data/visitorList.json?t=' + new Date().getTime());
-    yield put(actions.updateVisitorList(json));
+    const json: RootState['content']['config'] = yield call(fetchJson, './config.json?t=' + new Date().getTime());
+    yield put(actions.updateConfig(json));
+    yield put(actions.updateStatus('ok'));
+  } catch (e) {
+    yield call(errorHandler, e);
+  }
+}
 
+function* updateVisitorList() {
+  try {
+    const state: RootState = yield select();
+
+    const json: Visitor[] = yield call(fetchJson, state.content.config.data.visitor + '?t=' + new Date().getTime());
+    yield put(actions.updateVisitorList(json));
+    yield put(actions.updateStatus('ok'));
+  } catch (e) {
+    yield call(errorHandler, e);
+  }
+}
+
+function* updateAccepted() {
+  try {
+    const state: RootState = yield select();
+
+    const json: {
+      status: string;
+      data: Accepted[];
+    } = yield call(fetchJson, state.content.config.data.accepted + '?t=' + new Date().getTime());
+    if (json.status === 'ok') {
+      yield put(actions.updateAcceptedList(json.data));
+    }
     yield put(actions.updateStatus('ok'));
   } catch (e) {
     yield call(errorHandler, e);
@@ -26,5 +59,26 @@ function* errorHandler(error: any) {
     yield put(actions.updateStatus('error'));
   } catch (e) {
     console.error('★激辛だ★');
+  }
+}
+
+/**
+ * 読み取った受付情報を登録する
+ */
+export function* postReception(action: ReturnType<typeof actions.callPostReception>) {
+  try {
+    const state: RootState = yield select();
+
+    const body = {
+      'entry.621365618': action.payload.name,
+      'entry.500555129': action.payload.date,
+      'entry.953482088': action.payload.code,
+    };
+    const baseurl = state.content.config.api.reception;
+    yield call(postJson, `${baseurl}`, body);
+
+    yield call(updateAccepted);
+  } catch (e) {
+    console.error(e);
   }
 }

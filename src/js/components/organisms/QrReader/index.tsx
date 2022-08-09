@@ -38,8 +38,11 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
     startRecogQr(renderDeviceId);
   };
   const confirmQr = (visitor: Visitor) => () => {
-    // なんやかんや
-    //
+    props.postReception({
+      name: visitor.name,
+      date: visitor.date,
+      code: visitor.code,
+    });
 
     setQrData(null);
     startRecogQr(renderDeviceId);
@@ -109,7 +112,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
 
       const imageData = context.getImageData(0, 0, 720, 720);
       const code = jsQR(imageData.data, imageData.width, imageData.height);
-      if (code) {
+      if (code && code.binaryData.length > 0) {
         // 読み取れたら結果出力
         console.log(code);
         if (code.binaryData.length > 0) {
@@ -158,16 +161,28 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
       width: 300,
     };
 
-    const visitor = props.visitorList.find((item) => item.qr === txt);
+    const visitor = props.visitorList.find((item) => item.code === txt);
     return (
       <div style={{ textAlign: 'center', height: '100%' }}>
         <div style={{ top: 250, position: 'sticky' }}>
           <div style={{ marginBottom: 50 }}>
             <Typography variant="h3">{visitor ? visitor.name : '未登録者'}</Typography>
           </div>
-          <div style={{ marginBottom: 50 }}>
-            <Typography variant="h5">{typeToStr(visitor)}</Typography>
-          </div>
+          {visitor && (
+            <>
+              <div style={{ marginBottom: 10 }}>
+                <Typography variant="h5">{visitor.date}</Typography>
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <Typography variant="h5">{typeToStr(visitor)}</Typography>
+              </div>
+              <div style={{ marginBottom: 50 }}>
+                <Typography variant="h5" style={{ color: 'red' }}>
+                  {visitor.isCancel ? 'キャンセル者' : ''}
+                </Typography>
+              </div>
+            </>
+          )}
         </div>
         {/* ボタン類 */}
         <div style={{ position: 'fixed', bottom: 120, left: '25%' }}>
@@ -199,6 +214,7 @@ const mapStateToProps = (state: RootState) => {
 const mapDispatchToProps = {
   updateDeviceId: actions.updateReaderDevice,
   changeNotify: actions.changeNotify,
+  postReception: actions.callPostReception,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);
