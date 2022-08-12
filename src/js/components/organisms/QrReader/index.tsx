@@ -52,7 +52,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
    * QRコードの認識開始
    */
   const startRecogQr = async (deviceId = '') => {
-    const targetDeviceId = deviceId ? deviceId : renderDeviceId;
+    let targetDeviceId = deviceId ? deviceId : renderDeviceId;
     console.log('startRecogQr deviceId=' + targetDeviceId);
     stopRecogQR();
 
@@ -61,8 +61,27 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
     console.log(devices);
     setDeviceList(devices);
 
-    if (!devices.find((item) => item.deviceId === targetDeviceId)) {
+    if (devices.length === 0) {
+      console.log('ビデオ入力デバイスが無い');
+      alert('カメラ情報が取得できませんでした');
       return;
+    }
+
+    if (!devices.find((item) => item.deviceId === targetDeviceId)) {
+      console.log(`適切なデバイスが選択されなかった。 targetDeviceId=${targetDeviceId}`);
+
+      // 適当なカメラにfallbackする
+      let device = devices.find((item) => item.label.includes('背面'));
+      if (device) {
+        targetDeviceId = device.deviceId;
+      } else {
+        device = devices.find((item) => item.label.includes('env'));
+        if (device) {
+          targetDeviceId = device.deviceId;
+        } else {
+          targetDeviceId = devices[0].deviceId;
+        }
+      }
     }
 
     const aspect =
