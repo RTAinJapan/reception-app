@@ -164,7 +164,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
     const visitor = props.visitorList.find((item) => item.code === txt);
     return (
       <div style={{ textAlign: 'center', height: '100%' }}>
-        <div style={{ top: 250, position: 'sticky' }}>
+        <div style={{ top: 100, position: 'sticky' }}>
           <div style={{ marginBottom: 50 }}>
             <Typography variant="h3">{visitor ? visitor.name : '未登録者'}</Typography>
           </div>
@@ -180,6 +180,15 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
                 <Typography variant="h5" style={{ color: 'red' }}>
                   {visitor.isCancel ? 'キャンセル者' : ''}
                 </Typography>
+              </div>
+              <div style={{ marginBottom: 50 }}>
+                <Typography variant="h5" style={{ color: 'red' }}>
+                  {props.acceptedList.map((item) => item.code).includes(visitor.code) ? '使用済コード' : ''}
+                </Typography>
+              </div>
+
+              <div style={{ marginBottom: 50 }}>
+                <Typography variant="h5">{props.acceptedIdentifier.includes(visitor.identifier) ? '入場経験済' : ''}</Typography>
               </div>
             </>
           )}
@@ -207,6 +216,8 @@ const mapStateToProps = (state: RootState) => {
   return {
     readerDeviceId: state.content.displaySetting.readerDeviceId,
     visitorList: state.content.visitorList,
+    acceptedList: state.content.acceptedList,
+    acceptedIdentifier: state.content.acceptedIdentifierList,
   };
 };
 

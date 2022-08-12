@@ -37,7 +37,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   const closeModal = () => {
     setIsShowModal(false);
   };
-  const [showVisitor, setShowVisitor] = React.useState<Visitor>({ name: '', code: '', timestamp: '', type: 'visitor', isCancel: false, date: '' });
+  const [showVisitor, setShowVisitor] = React.useState<Visitor>({ name: '', code: '', timestamp: '', type: 'visitor', isCancel: false, date: '', identifier: '' });
 
   useEffect(() => {
     let newList: typeof dispVisitorList = JSON.parse(JSON.stringify(props.visitorList));

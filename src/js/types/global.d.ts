@@ -29,6 +29,9 @@ export type Visitor = {
    * @example '2022年8月11日'
    */
   date: string;
+
+  /** 人間を識別する文字列 */
+  identifier: string;
 };
 
 export type Accepted = {

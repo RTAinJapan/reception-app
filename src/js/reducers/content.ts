@@ -19,6 +19,8 @@ export type ContentState = {
   /** 入場者リスト */
   visitorList: Visitor[];
   acceptedList: Accepted[];
+  /** 人間単位で入場した人たち */
+  acceptedIdentifierList: string[];
   theme: {
     mode: 'light' | 'dark';
     theme: Theme;
@@ -46,6 +48,7 @@ export const initial: ContentState = {
 
   visitorList: [],
   acceptedList: [],
+  acceptedIdentifierList: [],
   theme: {
     mode: 'light',
     theme: customTheme('light'),
@@ -95,9 +98,18 @@ const reducer = (state: ContentState = initial, action: Action): ContentState =>
     }
 
     case getType(actions.updateAcceptedList): {
+      const list: string[] = [];
+      const acceptedList = action.payload.map((item) => item.code);
+      for (const visitor of state.visitorList) {
+        if (acceptedList.includes(visitor.code) && !list.includes(visitor.identifier)) {
+          list.push(visitor.identifier);
+        }
+      }
+
       return {
         ...state,
         acceptedList: action.payload,
+        acceptedIdentifierList: list,
       };
     }
 
