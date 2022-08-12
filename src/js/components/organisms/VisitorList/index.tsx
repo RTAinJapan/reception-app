@@ -113,14 +113,14 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   const createVisitorList = (visitor: Visitor) => {
     return (
       <button key={`${visitor.code}`} className={'qritem'}>
-        <Paper style={{ transform: 'translate(-50%, 0)', left: '50%', position: 'relative', height: '5em' }} onClick={showModal(visitor)}>
+        <Paper style={{ transform: 'translate(-50%, 0)', left: '50%', position: 'relative', height: '5em', padding: 2 }} onClick={showModal(visitor)}>
           <div>
             {acceptedList[visitor.code] && (
               <div style={{ position: 'absolute', right: 30 }}>
                 <CheckIcon style={{ color: 'lightgreen', fontSize: 50 }} />
               </div>
             )}
-            <div style={{ fontWeight: 600 }}>{visitor.name}</div>
+            <div style={{ fontWeight: 600, wordBreak: 'break-all' }}>{visitor.name}</div>
             <div style={{ position: 'absolute', bottom: 0, transform: 'translateX(150%)' }}>{typeToStr(visitor)}</div>
           </div>
         </Paper>

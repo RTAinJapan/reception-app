@@ -97,6 +97,11 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
             max: 2,
           };
 
+    const srcObj = document.querySelector('video')!.srcObject as MediaStream;
+    if (srcObj) {
+      srcObj.getTracks().map((item) => item.stop());
+    }
+
     // カメラ起動
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
