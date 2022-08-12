@@ -113,15 +113,15 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   const createVisitorList = (visitor: Visitor) => {
     return (
       <button key={`${visitor.code}`} className={'qritem'}>
-        <Paper style={{ transform: 'translate(-50%, 0)', left: '50%', position: 'relative' }} onClick={showModal(visitor)}>
+        <Paper style={{ transform: 'translate(-50%, 0)', left: '50%', position: 'relative', height: '5em' }} onClick={showModal(visitor)}>
           <div>
             {acceptedList[visitor.code] && (
               <div style={{ position: 'absolute', right: 30 }}>
                 <CheckIcon style={{ color: 'lightgreen', fontSize: 50 }} />
               </div>
             )}
-            <div>{visitor.name}</div>
-            <div>{typeToStr(visitor)}</div>
+            <div style={{ fontWeight: 600 }}>{visitor.name}</div>
+            <div style={{ position: 'absolute', bottom: 0, transform: 'translateX(150%)' }}>{typeToStr(visitor)}</div>
           </div>
         </Paper>
       </button>
@@ -153,7 +153,9 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
         </div>
 
         {/* リスト */}
-        <div className="content">{createList()}</div>
+        <div className="content" style={{ marginBottom: 80 }}>
+          {createList()}
+        </div>
         <div style={{ float: 'right', marginTop: -50, marginRight: 20, bottom: 0, position: 'sticky' }}>{props.status === 'processing' ? <CircularProgress /> : ''}</div>
       </div>
 

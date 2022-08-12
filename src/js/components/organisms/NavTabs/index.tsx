@@ -9,7 +9,7 @@ const useStyles = makeStyles({
   root: {
     flexGrow: 1,
     position: 'sticky',
-    top: '100vh',
+    bottom: 0,
     backgroundColor: 'white',
     zIndex: 1000,
   },
