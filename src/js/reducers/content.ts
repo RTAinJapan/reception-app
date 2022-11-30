@@ -9,15 +9,29 @@ export type ContentState = {
   config: {
     api: {
       reception: string;
+      formKey: {
+        name: string;
+        date: string;
+        code: string;
+      };
     };
+    /**
+     * 日付のリスト
+     * @example ["12月26日","12月27日"]
+     */
+    date: string[];
     data: {
-      visitor: string;
       accepted: string;
+      commentator: string;
+      runner: string;
+      visitor: string;
+      volunteer: string;
     };
   };
 
-  /** 入場者リスト */
+  /** 全入場者リスト */
   visitorList: Visitor[];
+  /** 入場済み */
   acceptedList: Accepted[];
   /** 人間単位で入場した人たち */
   acceptedIdentifierList: string[];
@@ -39,10 +53,19 @@ export const initial: ContentState = {
   config: {
     api: {
       reception: '',
+      formKey: {
+        name: '',
+        date: '',
+        code: '',
+      },
     },
+    date: [],
     data: {
-      visitor: '',
       accepted: '',
+      commentator: '',
+      runner: '',
+      visitor: '',
+      volunteer: '',
     },
   },
 

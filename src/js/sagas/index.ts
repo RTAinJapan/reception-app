@@ -27,8 +27,13 @@ function* updateVisitorList() {
   try {
     const state: RootState = yield select();
 
-    const json: Visitor[] = yield call(fetchJson, state.content.config.data.visitor + '?t=' + new Date().getTime());
-    yield put(actions.updateVisitorList(json));
+    const visitor: Visitor[] = yield call(fetchJson, state.content.config.data.visitor + '?t=' + new Date().getTime());
+    const runner: Visitor[] = yield call(fetchJson, state.content.config.data.runner + '?t=' + new Date().getTime());
+    const commentator: Visitor[] = yield call(fetchJson, state.content.config.data.commentator + '?t=' + new Date().getTime());
+    const volunteer: Visitor[] = yield call(fetchJson, state.content.config.data.volunteer + '?t=' + new Date().getTime());
+    const visitorList: Visitor[] = [...visitor, ...runner, ...commentator, ...volunteer];
+    yield put(actions.updateVisitorList(visitorList));
+
     yield put(actions.updateStatus('ok'));
   } catch (e) {
     yield call(errorHandler, e);
@@ -68,12 +73,12 @@ function* errorHandler(error: any) {
 export function* postReception(action: ReturnType<typeof actions.callPostReception>) {
   try {
     const state: RootState = yield select();
+    const formKey = state.content.config.api.formKey;
+    const body: any = {};
+    body[formKey.name] = action.payload.name;
+    body[formKey.date] = action.payload.date;
+    body[formKey.code] = action.payload.code;
 
-    const body = {
-      'entry.621365618': action.payload.name,
-      'entry.500555129': action.payload.date,
-      'entry.953482088': action.payload.code,
-    };
     const baseurl = state.content.config.api.reception;
     yield call(postJson, `${baseurl}`, body);
 

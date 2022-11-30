@@ -43,9 +43,23 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
       date: visitor.date,
       code: visitor.code,
     });
+    // 同じ人の他のポジションも受付扱いにする
+    if (visitor.type !== 'visitor') {
+      pickIdentifier(visitor).map((item) => {
+        props.postReception({
+          name: item.name,
+          date: item.date,
+          code: item.code,
+        });
+      });
+    }
 
     setQrData(null);
     startRecogQr(renderDeviceId);
+  };
+
+  const pickIdentifier = (visitor: Visitor): Visitor[] => {
+    return props.visitorList.filter((item) => item.code !== visitor.code && item.identifier === visitor.identifier);
   };
 
   /**
@@ -186,6 +200,16 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
     };
 
     const visitor = props.visitorList.find((item) => item.code === txt);
+    const types: Visitor['type'][] = [];
+    if (visitor) {
+      types.push(visitor.type);
+      const others = pickIdentifier(visitor).map((item) => item.type);
+      for (const other of others) {
+        if (!types.includes(other)) {
+          types.push(other);
+        }
+      }
+    }
     return (
       <div style={{ textAlign: 'center', height: '100%' }}>
         <div style={{ top: 100, position: 'sticky' }}>
@@ -194,11 +218,17 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
           </div>
           {visitor && (
             <>
+              {visitor.date && (
+                <div style={{ marginBottom: 10 }}>
+                  <Typography variant="h5">{visitor.date}</Typography>
+                </div>
+              )}
               <div style={{ marginBottom: 10 }}>
-                <Typography variant="h5">{visitor.date}</Typography>
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <Typography variant="h5">{typeToStr(visitor)}</Typography>
+                <Typography variant="h5">
+                  {types.map((item, index) => (
+                    <div key={`key_type_${index}`}>{typeToStr(item)}</div>
+                  ))}
+                </Typography>
               </div>
               <div style={{ marginBottom: 50 }}>
                 <Typography variant="h5" style={{ color: 'red' }}>

@@ -64,9 +64,9 @@ export const compColor = (baseColor: string) => {
   return color.cssRGB();
 };
 
-export const typeToStr = (visitor?: Visitor) => {
+export const typeToStr = (visitor?: Visitor['type']) => {
   if (!visitor) return '';
-  switch (visitor.type) {
+  switch (visitor) {
     case 'runner':
       return '走者';
     case 'commentator':

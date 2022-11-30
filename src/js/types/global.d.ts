@@ -29,14 +29,26 @@ export type Visitor = {
    * @example '2022年8月11日'
    */
   date: string;
-
-  /** 人間を識別する文字列 */
+  /** ユーザを識別する情報 */
   identifier: string;
 };
 
 export type Accepted = {
+  /**
+   * 名前
+   * @example "Rちゃん"
+   */
   name: string;
+  /**
+   * コード
+   * @example "1234567890abcd"
+   */
   code: string;
-  accepted: string;
+  /** 日付 */
+  date: string;
+  /**
+   * 受付時刻
+   * @example "2022-08-11T00:18:15.906Z"
+   */
   timestamp: string;
 };
