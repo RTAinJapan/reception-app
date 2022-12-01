@@ -201,12 +201,22 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
 
     const visitor = props.visitorList.find((item) => item.code === txt);
     const types: Visitor['type'][] = [];
+    let isOtherDay = false;
     if (visitor) {
       types.push(visitor.type);
       const others = pickIdentifier(visitor).map((item) => item.type);
       for (const other of others) {
         if (!types.includes(other)) {
           types.push(other);
+        }
+      }
+      if (types.includes('visitor')) {
+        const date = new Date(visitor.date.replace(/年|月/g, '/').replace('日', ''));
+        const now = new Date();
+        console.log(date);
+        console.log(now);
+        if (now.getDate() !== date.getDate()) {
+          isOtherDay = true;
         }
       }
     }
@@ -221,6 +231,11 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
               {visitor.date && (
                 <div style={{ marginBottom: 10 }}>
                   <Typography variant="h5">{visitor.date}</Typography>
+                </div>
+              )}
+              {isOtherDay && (
+                <div style={{ marginBottom: 10, color: 'red' }}>
+                  <Typography variant="h5">今日じゃないコードです</Typography>
                 </div>
               )}
               <div style={{ marginBottom: 10 }}>
