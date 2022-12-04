@@ -43,7 +43,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   // 入場者の表示リストを更新
   useEffect(() => {
     let newList: typeof dispVisitorList = JSON.parse(JSON.stringify(props.visitorList));
-    if (['runner', 'commentator', 'volunteer'].includes(date)) {
+    if (['runner', 'commentator', 'volunteer', 'guest'].includes(date)) {
       newList = newList.filter((item) => item.type === date);
     } else {
       newList = newList.filter((item) => item.date === date);
@@ -154,7 +154,9 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
                 <MenuItem key={'volunteer'} value={'volunteer'}>
                   会場ボランティア
                 </MenuItem>
-
+                <MenuItem key={'guest'} value={'guest'}>
+                  ゲスト
+                </MenuItem>
                 {props.dateList.map((date) => {
                   return (
                     <MenuItem key={date} value={date}>

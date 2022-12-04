@@ -31,7 +31,8 @@ function* updateVisitorList() {
     const runner: Visitor[] = yield call(fetchJson, state.content.config.data.runner + '?t=' + new Date().getTime());
     const commentator: Visitor[] = yield call(fetchJson, state.content.config.data.commentator + '?t=' + new Date().getTime());
     const volunteer: Visitor[] = yield call(fetchJson, state.content.config.data.volunteer + '?t=' + new Date().getTime());
-    const visitorList: Visitor[] = [...visitor, ...runner, ...commentator, ...volunteer];
+    const guest: Visitor[] = yield call(fetchJson, state.content.config.data.guest + '?t=' + new Date().getTime());
+    const visitorList: Visitor[] = [...visitor, ...runner, ...commentator, ...volunteer, ...guest];
     yield put(actions.updateVisitorList(visitorList));
 
     yield put(actions.updateStatus('ok'));

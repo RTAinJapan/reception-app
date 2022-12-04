@@ -12,7 +12,7 @@ export type Visitor = {
   /** 名前 */
   name: string;
   /** 入場者の種別 */
-  type: 'runner' | 'commentator' | 'volunteer' | 'visitor';
+  type: 'runner' | 'commentator' | 'volunteer' | 'visitor' | 'guest';
   /**
    * @example '11958fb1b6f950444d850b8e4d55447400'
    */

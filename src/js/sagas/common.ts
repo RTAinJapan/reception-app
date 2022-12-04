@@ -75,6 +75,8 @@ export const typeToStr = (visitor?: Visitor['type']) => {
       return 'ボランティア';
     case 'visitor':
       return '観客';
+    case 'guest':
+      return 'ゲスト';
     default:
       return 'その他';
   }

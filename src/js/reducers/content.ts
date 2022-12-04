@@ -23,6 +23,7 @@ export type ContentState = {
     data: {
       accepted: string;
       commentator: string;
+      guest: string;
       runner: string;
       visitor: string;
       volunteer: string;
@@ -63,6 +64,7 @@ export const initial: ContentState = {
     data: {
       accepted: '',
       commentator: '',
+      guest: '',
       runner: '',
       visitor: '',
       volunteer: '',
