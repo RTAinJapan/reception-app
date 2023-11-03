@@ -211,8 +211,11 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
         }
       }
       if (types.includes('visitor')) {
-        const date = new Date(visitor.date.replace(/年|月/g, '/').replace('日', ''));
         const now = new Date();
+
+        let dateTmp = visitor.date.replace(/年|月/g, '/').replace('日', '');
+        if (!visitor.date.includes('年')) dateTmp = `${now.getFullYear()}/${dateTmp}`;
+        const date = new Date();
         console.log(date);
         console.log(now);
         if (now.getDate() !== date.getDate()) {
