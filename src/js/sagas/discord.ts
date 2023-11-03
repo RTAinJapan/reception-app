@@ -11,7 +11,8 @@ export function* oauthDiscord() {
   const config: RootState['content']['config']['discord']['config'] = state.content.config.discord.config;
 
   const discordState = Math.random() * 100000000;
-  const url = `https://discordapp.com/api/oauth2/authorize?response_type=token&client_id=${config.clientId}&state=${discordState}&scope=${config.scope}`;
+  // eslint-disable-next-line prettier/prettier
+  const url = `https://discordapp.com/api/oauth2/authorize?response_type=token&client_id=${config.clientId}&state=${discordState}&scope=${config.scope}&redirect_uri=${encodeURIComponent(config.redirectUrl)}`;
   window.location.replace(url);
 }
 
