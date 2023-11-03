@@ -8,6 +8,7 @@ import { QRCodeRenderersOptions } from 'qrcode';
 import { Button, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
 import { stopRecogQR } from '../../../common/util';
 import { Visitor } from '../../../types/global';
+import { converDate as convertDate } from '../../../sagas/common';
 
 const useStyles = () =>
   makeStyles({
@@ -63,7 +64,9 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
 
   /** identifierを同じくする他の入場者情報（役職違いとか）を抽出。引数指定したやつは返さない */
   const pickIdentifier = (visitor: Visitor): Visitor[] => {
-    return props.visitorList.filter((item) => item.code !== visitor.code && item.identifier === visitor.identifier);
+    const result = props.visitorList.filter((item) => item.code !== visitor.code && item.identifier === visitor.identifier);
+    console.log(`pickIdentifier=${result.length}`);
+    return result;
   };
 
   /**
@@ -235,7 +238,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
                 <div style={{ marginBottom: 10, color: 'red' }}>
                   <Typography variant="h5">コードが有効期限外です</Typography>
                   <Typography variant="caption">
-                    {visitor.start_at}〜{visitor.end_at}
+                    {convertDate(visitor.start_at)}〜{convertDate(visitor.end_at)}
                   </Typography>
                 </div>
               )}

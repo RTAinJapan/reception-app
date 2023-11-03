@@ -11,6 +11,8 @@ export type ContentState = {
       accepted: string;
       visitor: string;
       badgeholder: string;
+      /** APIトークン */
+      token: string;
     };
   };
 
@@ -40,6 +42,7 @@ export const initial: ContentState = {
       accepted: '',
       visitor: '',
       badgeholder: '',
+      token: '',
     },
   },
   visitorList: [],

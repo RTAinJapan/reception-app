@@ -28,7 +28,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   // 入場受付済み
   const [acceptedList, setAcceptedList] = React.useState<{ [code: string]: string }>({});
   // 入場者種別セレクトボックス選択中要素
-  const [selectedCategory, setCategory] = React.useState<string>('runner');
+  const [selectedCategory, setSelectedCategory] = React.useState<string>('走者');
   enum DISP_TYPE {
     ALL,
     ACCEPTED,
@@ -42,6 +42,17 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   // 入場者単体表示
   const [showVisitor, setShowVisitor] = React.useState<Visitor>({ id: '', name: '', code: '', category: '', start_at: '', end_at: '', identifier: '', isDailyAccept: false });
   const [caption, setCaption] = React.useState<string>('');
+
+  // セレクトボックス更新
+  useEffect(() => {
+    const tmp: string[] = [];
+    props.visitorList.map((item) => {
+      if (!tmp.includes(item.category)) {
+        tmp.push(item.category);
+      }
+    });
+    setCategories(tmp);
+  }, [JSON.stringify(props.visitorList)]);
 
   // 入場者の表示リストを更新
   useEffect(() => {
@@ -67,8 +78,8 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
 
     // 名前順でソート
     newList = newList.sort((a, b) => {
-      if (a.name.toString() > b.name.toString()) return 1;
-      if (a.name.toString() < b.name.toString()) return -1;
+      if (a.name.toString().toLowerCase() > b.name.toString().toLowerCase()) return 1;
+      if (a.name.toString().toLowerCase() < b.name.toString().toLowerCase()) return -1;
       return 0;
     });
 
@@ -87,7 +98,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   }, [JSON.stringify(props.acceptedList)]);
 
   const changeCategory = (event: SelectChangeEvent<string>, child: React.ReactNode) => {
-    setCategory(event.target.value);
+    setSelectedCategory(event.target.value);
   };
 
   const changeDispType = () => {

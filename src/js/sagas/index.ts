@@ -1,7 +1,7 @@
 import { call, put, select, takeEvery } from 'redux-saga/effects';
 import * as actions from '../actions';
 import { RootState } from '../reducers';
-import { Accepted, Visitor } from '../types/global';
+import { Accepted, CommonResponse, Visitor } from '../types/global';
 import { fetchJson, postJson } from './common';
 
 export default function* rootSaga() {
@@ -29,11 +29,36 @@ function* updateVisitorList() {
   try {
     const state: RootState = yield select();
 
-    const visitor: Visitor[] = yield call(fetchJson, state.content.config.api.visitor + '?t=' + new Date().getTime());
-    const badgeholder: Visitor[] = yield call(fetchJson, state.content.config.api.badgeholder + '?t=' + new Date().getTime());
-    const visitorList: Visitor[] = [...visitor, ...badgeholder];
+    const visitor: CommonResponse<Visitor[]> = yield call(fetchJson, state.content.config.api.visitor + '?t=' + new Date().getTime(), {
+      'x-app-token': state.content.config.api.token,
+    });
+    const badgeholder: CommonResponse<Visitor[]> = yield call(fetchJson, state.content.config.api.badgeholder + '?t=' + new Date().getTime(), {
+      'x-app-token': state.content.config.api.token,
+    });
+    const visitorList: Visitor[] = [];
+    let isError = false;
+    if (visitor.status === 'ok') {
+      console.log('fetch visitor: ok');
+      visitorList.push(
+        ...visitor.data.map((item) => {
+          return { ...item, isDailyAccept: true };
+        }),
+      );
+    } else {
+      isError = true;
+    }
+    if (badgeholder.status === 'ok') {
+      console.log('fetch badgeholder: ok');
+      visitorList.push(...badgeholder.data);
+    } else {
+      isError = true;
+    }
+    console.log(`入場者数：` + visitorList.length);
     yield put(actions.updateVisitorList(visitorList));
 
+    if (isError) {
+      throw new Error('入場者情報の取得でエラーが発生しました');
+    }
     yield put(actions.updateStatus('ok'));
   } catch (e) {
     yield call(errorHandler, e);
@@ -47,7 +72,10 @@ function* updateAccepted() {
     const json: {
       status: string;
       data: Accepted[];
-    } = yield call(fetchJson, state.content.config.api.accepted + '?t=' + new Date().getTime());
+    } = yield call(fetchJson, state.content.config.api.accepted + '?t=' + new Date().getTime(), {
+      'x-app-token': state.content.config.api.token,
+    });
+    // postのレスポンスは、現在登録されてる全データなのでこれを保持する
     if (json.status === 'ok') {
       yield put(actions.updateAcceptedList(json.data));
     }
@@ -79,7 +107,9 @@ export function* postReception(action: ReturnType<typeof actions.callPostRecepti
     const json: {
       status: string;
       data: any;
-    } = yield call(postJson, `${baseurl}`, body);
+    } = yield call(postJson, `${baseurl}`, body, {
+      'x-app-token': state.content.config.api.token,
+    });
 
     // レスポンスを保存
     if (json.status === 'ok') {

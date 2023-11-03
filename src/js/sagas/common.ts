@@ -9,9 +9,9 @@ import { Color } from './Color';
  * @throws 通信エラー
  * @throws JSON変換エラー
  */
-export const fetchJson = async <T>(url: string): Promise<T> => {
+export const fetchJson = async <T>(url: string, headers: any = {}): Promise<T> => {
   try {
-    const result = await fetch(url, { cache: 'no-store' });
+    const result = await fetch(url, { cache: 'no-store', headers: headers });
     const config = await result.json();
     return config as T;
   } catch (e) {
@@ -20,31 +20,16 @@ export const fetchJson = async <T>(url: string): Promise<T> => {
   }
 };
 
-export const postJson = async <T>(url: string, body: object): Promise<T> => {
+export const postJson = async <T>(url: string, body: object, headers: any = {}): Promise<T> => {
   try {
     const result = await fetch(url, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
+        ...headers,
       },
       body: JSON.stringify(body),
-    });
-    return (await result.json()) as T;
-  } catch (e) {
-    console.error(e);
-    throw new Error(`通信エラーが発生しました。 ${e.message}`);
-  }
-};
-
-export const postFile = async <T>(url: string, file: File): Promise<T> => {
-  try {
-    const formData = new FormData();
-    formData.append(file.name, file);
-
-    const result = await fetch(url, {
-      method: 'POST',
-      body: formData,
     });
     return (await result.json()) as T;
   } catch (e) {
@@ -69,11 +54,11 @@ export const converDate = (timeStr: string) => {
 
   const date = new Date(timeStr);
   const y = date.getFullYear();
-  const m = date.getMonth() + 1;
-  const d = date.getDate();
-  const h = date.getHours();
-  const mm = date.getMinutes();
-  const s = date.getSeconds();
+  const m = `00${date.getMonth() + 1}`.slice(-2);
+  const d = `00${date.getDate()}`.slice(-2);
+  const h = `00${date.getHours()}`.slice(-2);
+  const mm = `00${date.getMinutes()}`.slice(-2);
+  const s = `00${date.getSeconds()}`.slice(-2);
 
   return `${y}/${m}/${d} ${h}:${mm}:${s}`;
 };

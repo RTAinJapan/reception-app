@@ -8,6 +8,16 @@ export type ArrayItem<T extends any[]> = T extends (infer Titem)[] ? Titem : nev
 export type ResolvedType<T> = T extends Promise<infer R> ? R : T;
 export type GeneratorType<T extends (...args: any) => any> = ResolvedType<ReturnType<T>>;
 
+export type CommonResponse<T> =
+  | {
+      status: 'ok';
+      data: T;
+    }
+  | {
+      status: 'ng';
+      data: string;
+    };
+
 export type Visitor = {
   /** 連番 */
   id: string;
@@ -41,8 +51,12 @@ export type Accepted = {
    * @example "1234567890abcd"
    */
   code: string;
-  /** 日付 */
-  date: string;
+  /**
+   * 入場者種別
+   * @example '走者'
+   * @example '観客 12月25日'
+   */
+  category: string;
   /**
    * 受付時刻
    * @example "2022-08-11T00:18:15.906Z"
