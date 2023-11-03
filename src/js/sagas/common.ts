@@ -16,7 +16,7 @@ export const fetchJson = async <T>(url: string, headers: any = {}): Promise<T> =
     return config as T;
   } catch (e) {
     console.error(e);
-    throw new Error(`通信エラーが発生しました。 ${e.message}`);
+    throw new Error(`通信エラーが発生しました。url=${url} ${e.message}`);
   }
 };
 
@@ -34,7 +34,7 @@ export const postJson = async <T>(url: string, body: object, headers: any = {}):
     return (await result.json()) as T;
   } catch (e) {
     console.error(e);
-    throw new Error(`通信エラーが発生しました。 ${e.message}`);
+    throw new Error(`通信エラーが発生しました。url=${url} ${e.message}`);
   }
 };
 
