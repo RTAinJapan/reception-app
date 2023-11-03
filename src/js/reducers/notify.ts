@@ -17,7 +17,7 @@ export type DialogState = {
 };
 
 export type NotifyState = {
-  status: 'processing' | 'ok' | 'error';
+  status: 'initialize' | 'processing' | 'ok' | 'error';
   /** 通知欄 */
   notify: {
     /** 表示可否 */
@@ -34,7 +34,7 @@ export type NotifyState = {
 };
 
 export const initial: NotifyState = {
-  status: 'processing',
+  status: 'initialize',
   // 通知欄
   notify: {
     show: false,
@@ -54,6 +54,7 @@ export const initial: NotifyState = {
 const reducer = (state: NotifyState = initial, action: Action): NotifyState => {
   switch (action.type) {
     case getType(actions.updateStatus): {
+      console.log(`updateStatus: ${action.payload}`);
       return { ...state, status: action.payload };
     }
 

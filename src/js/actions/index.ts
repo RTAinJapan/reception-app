@@ -74,3 +74,22 @@ const UPDATE_ACCEPTED_LIST = 'UPDATE_ACCEPTED_LIST';
 export const updateAcceptedList = createAction(UPDATE_ACCEPTED_LIST, (action) => {
   return (list: Accepted[]) => action(list);
 });
+
+// Discord
+const LOGIN_DISCORD = 'LOGIN_DISCORD';
+/** ログインする */
+export const loginDiscord = createAction(LOGIN_DISCORD, (action) => {
+  return () => action();
+});
+
+const LOGOUT_DISCORD = 'LOGOUT_DISCORD';
+/** ログアウトする */
+export const logoutDiscord = createAction(LOGOUT_DISCORD, (action) => {
+  return () => action();
+});
+
+const STORE_DISCORD_USER_NAME = 'STORE_DISCORD_USER_NAME';
+/** Discordのユーザ名を格納 */
+export const storeDiscordUserName = createAction(STORE_DISCORD_USER_NAME, (action) => {
+  return (username: string | null) => action(username);
+});

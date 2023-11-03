@@ -1,18 +1,24 @@
 import { call, put, select, takeEvery } from 'redux-saga/effects';
 import * as actions from '../actions';
 import { RootState } from '../reducers';
+import { loginCheck, logoutDiscord, oauthDiscord } from './discord';
 import { Accepted, CommonResponse, Visitor } from '../types/global';
 import { fetchJson, postJson } from './common';
 
 export default function* rootSaga() {
   yield takeEvery(actions.callPostReception, postReception);
+  yield takeEvery(actions.loginDiscord, oauthDiscord);
+  yield takeEvery(actions.logoutDiscord, logoutDiscord);
+  yield takeEvery(actions.fetchVisitorList, fetchVisitorList);
 
   // DB初期設定
   yield call(initConfig);
+
+  yield call(loginCheck);
+  // yield put(actions.storeDiscordUserName('テストユーザ'));
+
   yield call(updateVisitorList);
   yield call(updateAccepted);
-
-  yield takeEvery(actions.fetchVisitorList, fetchVisitorList);
 }
 
 /** Config取得 */
@@ -20,7 +26,6 @@ function* initConfig() {
   try {
     const json: RootState['content']['config'] = yield call(fetchJson, './config.json?t=' + new Date().getTime());
     yield put(actions.updateConfig(json));
-    yield put(actions.updateStatus('ok'));
   } catch (e) {
     yield call(errorHandler, e);
   }
@@ -30,6 +35,9 @@ function* initConfig() {
 function* updateVisitorList() {
   try {
     const state: RootState = yield select();
+    if (!state.content.discord.username) {
+      return;
+    }
 
     const visitor: CommonResponse<Visitor[]> = yield call(fetchJson, state.content.config.api.visitor + '?t=' + new Date().getTime(), {
       'x-app-token': state.content.config.api.token,
@@ -70,6 +78,9 @@ function* updateVisitorList() {
 function* updateAccepted() {
   try {
     const state: RootState = yield select();
+    if (!state.content.discord.username) {
+      return;
+    }
 
     const json: {
       status: string;

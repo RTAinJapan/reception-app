@@ -14,6 +14,20 @@ export type ContentState = {
       /** APIトークン */
       token: string;
     };
+    /** Discordの設定 */
+    discord: {
+      enable: boolean;
+      config: {
+        baseUrl: string;
+        clientId: string;
+        redirectUrl: string;
+        scope: string;
+      };
+      /** サーバID */
+      guild: string;
+      /** この画面を操作できるユーザID。 */
+      users: string[];
+    };
   };
 
   /** 全入場者リスト */
@@ -25,6 +39,11 @@ export type ContentState = {
   theme: {
     mode: 'light' | 'dark';
     theme: Theme;
+  };
+
+  discord: {
+    username: string | null;
+    token: string | null;
   };
 
   reader: {
@@ -44,6 +63,17 @@ export const initial: ContentState = {
       badgeholder: '',
       token: '',
     },
+    discord: {
+      enable: true,
+      config: {
+        baseUrl: '',
+        clientId: '',
+        redirectUrl: '',
+        scope: '',
+      },
+      guild: '',
+      users: [],
+    },
   },
   visitorList: [],
   acceptedList: [],
@@ -51,6 +81,10 @@ export const initial: ContentState = {
   theme: {
     mode: 'light',
     theme: customTheme('light'),
+  },
+  discord: {
+    username: null,
+    token: null,
   },
   reader: {
     timer: 0,
@@ -76,6 +110,16 @@ const reducer = (state: ContentState = initial, action: Action): ContentState =>
       return {
         ...state,
         config: action.payload,
+      };
+    }
+
+    case getType(actions.storeDiscordUserName): {
+      return {
+        ...state,
+        discord: {
+          ...state.discord,
+          username: action.payload,
+        },
       };
     }
 

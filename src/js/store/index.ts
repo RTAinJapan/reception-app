@@ -6,12 +6,13 @@ import { initial } from '../reducers/notify';
 import { initial as contentInitial } from '../reducers/content';
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const STATE_STORAGE_KEY = 'reception_reduxState_conntent';
 
 export default function configureStore() {
   const sagaMiddleware = createSagaMiddleware();
   // const store = createStore(reducer, composeEnhancers(applyMiddleware(sagaMiddleware)));
 
-  const stateStr = localStorage.getItem('reduxState_conntent');
+  const stateStr = localStorage.getItem(STATE_STORAGE_KEY);
   const persistedState = stateStr
     ? {
         notify: initial as any,
@@ -25,7 +26,7 @@ export default function configureStore() {
   const store = createStore(reducer, persistedState, composeEnhancers(applyMiddleware(sagaMiddleware)));
   // 変更があったときに保存する
   store.subscribe(() => {
-    localStorage.setItem('reduxState_conntent', JSON.stringify(store.getState().content));
+    localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(store.getState().content));
   });
 
   if ((module as any).hot) {
