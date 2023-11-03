@@ -11,6 +11,8 @@ export default function* rootSaga() {
   yield call(initConfig);
   yield call(updateVisitorList);
   yield call(updateAccepted);
+
+  yield takeEvery(actions.fetchVisitorList, fetchVisitorList);
 }
 
 /** Config取得 */
@@ -120,5 +122,15 @@ export function* postReception(action: ReturnType<typeof actions.callPostRecepti
     }
   } catch (e) {
     console.error(e);
+  }
+}
+
+export function* fetchVisitorList(action: ReturnType<typeof actions.fetchVisitorList>) {
+  try {
+    yield call(updateVisitorList);
+    yield call(updateAccepted);
+    yield put(actions.changeNotify(true, 'info', '更新完了'));
+  } catch (e) {
+    errorHandler(e);
   }
 }

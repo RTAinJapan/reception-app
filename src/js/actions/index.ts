@@ -55,6 +55,11 @@ export const updateReaderDevice = createAction(UPDATE_READER_DEVICE, (action) =>
   return (deviceId: string) => action(deviceId);
 });
 
+const FETCH_VISITOR_LIST = 'FETCH_VISITOR_LIST';
+export const fetchVisitorList = createAction(FETCH_VISITOR_LIST, (action) => {
+  return () => action();
+});
+
 const UPDATE_VISITOR_LIST = 'UPDATE_VISITOR_LIST';
 export const updateVisitorList = createAction(UPDATE_VISITOR_LIST, (action) => {
   return (list: Visitor[]) => action(list);

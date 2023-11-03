@@ -2,18 +2,24 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { makeStyles } from '@mui/styles';
 import CheckIcon from '@mui/icons-material/Check';
-import { Button, CircularProgress, MenuItem, Paper, Select, SelectChangeEvent, Typography } from '@mui/material';
+import { Button, CircularProgress, Fab, MenuItem, Paper, Select, SelectChangeEvent, Typography, Theme } from '@mui/material';
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
 import { Visitor } from '../../../types/global';
 import { converDate } from '../../../sagas/common';
 import Modal from '../../molecules/Modal';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 const useStyles = () =>
   makeStyles({
     root: {
       display: 'flex',
       position: 'relative',
+    },
+    reloadButton: {
+      position: 'absolute !important' as any,
+      bottom: '6em',
+      right: '1em',
     },
   })();
 
@@ -196,6 +202,12 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
         <div className="content" style={{ marginBottom: 80 }}>
           {createList()}
         </div>
+        {/* データ更新ボタン */}
+        <div style={{ height: '100%' }}>
+          <Fab className={classes.reloadButton} color={'primary'} onClick={() => props.fetchVisitorList()}>
+            <RefreshIcon />
+          </Fab>
+        </div>
         <div style={{ float: 'right', marginTop: -50, marginRight: 20, bottom: 0, position: 'sticky' }}>{props.status === 'processing' ? <CircularProgress /> : ''}</div>
       </div>
 
@@ -225,6 +237,7 @@ const mapStateToProps = (state: RootState) => {
 // action
 const mapDispatchToProps = {
   changeNotify: actions.changeNotify,
+  fetchVisitorList: actions.fetchVisitorList,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);
