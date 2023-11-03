@@ -8,25 +8,9 @@ type Action = ActionType<typeof actions>;
 export type ContentState = {
   config: {
     api: {
-      reception: string;
-      formKey: {
-        name: string;
-        date: string;
-        code: string;
-      };
-    };
-    /**
-     * 日付のリスト
-     * @example ["12月26日","12月27日"]
-     */
-    date: string[];
-    data: {
       accepted: string;
-      commentator: string;
-      guest: string;
-      runner: string;
       visitor: string;
-      volunteer: string;
+      badgeholder: string;
     };
   };
 
@@ -53,24 +37,11 @@ export type ContentState = {
 export const initial: ContentState = {
   config: {
     api: {
-      reception: '',
-      formKey: {
-        name: '',
-        date: '',
-        code: '',
-      },
-    },
-    date: [],
-    data: {
       accepted: '',
-      commentator: '',
-      guest: '',
-      runner: '',
       visitor: '',
-      volunteer: '',
+      badgeholder: '',
     },
   },
-
   visitorList: [],
   acceptedList: [],
   acceptedIdentifierList: [],

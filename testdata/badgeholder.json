@@ -1,0 +1,14 @@
+{
+  "status": "ok",
+  "data": [
+    {
+      "id": 1,
+      "name": "Rちゃん",
+      "category": "走者",
+      "start_at": "2023-12-25T00:00:00",
+      "end_at": "2023-12-31T23:59:59",
+      "identifier": "123456",
+      "code": "testcode"
+    }
+  ]
+}

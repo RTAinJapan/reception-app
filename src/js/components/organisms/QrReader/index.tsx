@@ -8,7 +8,6 @@ import { QRCodeRenderersOptions } from 'qrcode';
 import { Button, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
 import { stopRecogQR } from '../../../common/util';
 import { Visitor } from '../../../types/global';
-import { typeToStr } from '../../../sagas/common';
 
 const useStyles = () =>
   makeStyles({
@@ -33,31 +32,36 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
     startRecogQr();
   }, []);
 
-  const cancelReader = () => {
+  const handleCancelReader = () => {
     setQrData(null);
     startRecogQr(renderDeviceId);
   };
-  const confirmQr = (visitor: Visitor) => () => {
+
+  /** コード承認ボタン */
+  const handleConfirmQr = (visitor: Visitor) => () => {
     props.postReception({
       name: visitor.name,
-      date: visitor.date,
+      category: visitor.category,
       code: visitor.code,
     });
-    // 同じ人の他のポジションも受付扱いにする
-    if (visitor.type !== 'visitor') {
+
+    if (!visitor.isDailyAccept) {
+      // 同じ人の他のポジションも受付扱いにする
       pickIdentifier(visitor).map((item) => {
         props.postReception({
           name: item.name,
-          date: item.date,
+          category: item.category,
           code: item.code,
         });
       });
     }
 
+    // 認識再開
     setQrData(null);
     startRecogQr(renderDeviceId);
   };
 
+  /** identifierを同じくする他の入場者情報（役職違いとか）を抽出。引数指定したやつは返さない */
   const pickIdentifier = (visitor: Visitor): Visitor[] => {
     return props.visitorList.filter((item) => item.code !== visitor.code && item.identifier === visitor.identifier);
   };
@@ -191,38 +195,34 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   const createQrResult = () => {
     const byte = qrData?.byte ?? [];
     const txt = qrData?.data ?? '';
-    const binStr = byte.map((item) => `00${item.toString(16)}`.slice(-2)).join('');
-    const version = qrData?.version ?? 0;
-    const options: QRCodeRenderersOptions = {
-      errorCorrectionLevel: 'M',
-      margin: 2,
-      width: 300,
-    };
+    // const binStr = byte.map((item) => `00${item.toString(16)}`.slice(-2)).join('');
+    // const version = qrData?.version ?? 0;
+    // const options: QRCodeRenderersOptions = {
+    //   errorCorrectionLevel: 'M',
+    //   margin: 2,
+    //   width: 300,
+    // };
 
+    // 読み取ったコードをリストの中から探索
     const visitor = props.visitorList.find((item) => item.code === txt);
-    const types: Visitor['type'][] = [];
-    let isOtherDay = false;
+    const types: Visitor['category'][] = [];
+    let isExpired = false;
     if (visitor) {
-      types.push(visitor.type);
-      const others = pickIdentifier(visitor).map((item) => item.type);
-      for (const other of others) {
-        if (!types.includes(other)) {
-          types.push(other);
-        }
+      // 入場コードが有効な期限かをチェック
+      const now = new Date().getTime();
+      if (new Date(visitor.start_at).getTime() <= now && now <= new Date(visitor.end_at).getTime()) {
+        console.log('is valid date');
+      } else {
+        isExpired = true;
       }
-      if (types.includes('visitor')) {
-        const now = new Date();
 
-        let dateTmp = visitor.date.replace(/年|月/g, '/').replace('日', '');
-        if (!visitor.date.includes('年')) dateTmp = `${now.getFullYear()}/${dateTmp}`;
-        const date = new Date();
-        console.log(date);
-        console.log(now);
-        if (now.getDate() !== date.getDate()) {
-          isOtherDay = true;
-        }
+      types.push(visitor.category);
+      if (!visitor.isDailyAccept) {
+        // 他の役職を抽出
+        types.push(...pickIdentifier(visitor).map((item) => item.category));
       }
     }
+
     return (
       <div style={{ textAlign: 'center', height: '100%' }}>
         <div style={{ top: 100, position: 'sticky' }}>
@@ -231,26 +231,19 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
           </div>
           {visitor && (
             <>
-              {visitor.date && (
-                <div style={{ marginBottom: 10 }}>
-                  <Typography variant="h5">{visitor.date}</Typography>
-                </div>
-              )}
-              {isOtherDay && (
+              {isExpired && (
                 <div style={{ marginBottom: 10, color: 'red' }}>
-                  <Typography variant="h5">今日じゃないコードです</Typography>
+                  <Typography variant="h5">コードが有効期限外です</Typography>
+                  <Typography variant="caption">
+                    {visitor.start_at}〜{visitor.end_at}
+                  </Typography>
                 </div>
               )}
               <div style={{ marginBottom: 10 }}>
                 <Typography variant="h5">
                   {types.map((item, index) => (
-                    <div key={`key_type_${index}`}>{typeToStr(item)}</div>
+                    <div key={`key_type_${index}`}>{item}</div>
                   ))}
-                </Typography>
-              </div>
-              <div style={{ marginBottom: 50 }}>
-                <Typography variant="h5" style={{ color: 'red' }}>
-                  {visitor.isCancel ? 'キャンセル者' : ''}
                 </Typography>
               </div>
               <div style={{ marginBottom: 50 }}>
@@ -268,11 +261,11 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
         {/* ボタン類 */}
         <div style={{ position: 'fixed', bottom: 120, left: '25%' }}>
           {visitor && (
-            <Button variant="contained" color="info" onClick={confirmQr(visitor)} style={{ margin: 10 }}>
+            <Button variant="contained" color="info" onClick={handleConfirmQr(visitor)} style={{ margin: 10 }}>
               承認
             </Button>
           )}
-          <Button variant="contained" color="error" onClick={cancelReader} style={{ margin: 10 }}>
+          <Button variant="contained" color="error" onClick={handleCancelReader} style={{ margin: 10 }}>
             キャンセル
           </Button>
         </div>

@@ -86,7 +86,6 @@ const CustomizedSnackbars: React.SFC<CustomeProps> = (props: CustomeProps & Prop
     >
       <SnackbarContent
         style={{ background: snackbarBackground[props.variant].backgroundColor, color: 'white' }}
-        className={classes[props.variant]}
         message={
           <span className={classes.message}>
             <Icon className={classNames(classes.icon, classes.iconVariant)} />

@@ -6,7 +6,7 @@ import { Button, CircularProgress, MenuItem, Paper, Select, SelectChangeEvent, T
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
 import { Visitor } from '../../../types/global';
-import { converDate, typeToStr } from '../../../sagas/common';
+import { converDate } from '../../../sagas/common';
 import Modal from '../../molecules/Modal';
 
 const useStyles = () =>
@@ -23,55 +23,59 @@ type ActionProps = typeof mapDispatchToProps;
 type PropsType = ComponentProps & ActionProps;
 const App: React.SFC<PropsType> = (props: PropsType) => {
   const classes = useStyles();
-  // 表示対象
+  // 表示対象の入場者
   const [dispVisitorList, setDispVisitorList] = React.useState<Visitor[]>([]);
+  // 入場受付済み
   const [acceptedList, setAcceptedList] = React.useState<{ [code: string]: string }>({});
-  const [date, setDate] = React.useState<string>('runner');
-  const [dispType, setDispType] = React.useState<0 | 1 | 2>(0);
+  // 入場者種別セレクトボックス選択中要素
+  const [selectedCategory, setCategory] = React.useState<string>('runner');
+  enum DISP_TYPE {
+    ALL,
+    ACCEPTED,
+    NOT_ACCEPTED,
+  }
+  const [dispType, setDispType] = React.useState<DISP_TYPE>(DISP_TYPE.ALL);
+  // 入場者種別セレクトボックス表示要素
+  const [categories, setCategories] = React.useState<string[]>([]);
 
   const [isShowModal, setIsShowModal] = React.useState<boolean>(false);
-  const showModal = (visitor: Visitor) => () => {
-    setShowVisitor(visitor);
-    setIsShowModal(true);
-  };
-  const closeModal = () => {
-    setIsShowModal(false);
-  };
-  const [showVisitor, setShowVisitor] = React.useState<Visitor>({ name: '', code: '', timestamp: '', type: 'visitor', isCancel: false, date: '', identifier: '' });
+  // 入場者単体表示
+  const [showVisitor, setShowVisitor] = React.useState<Visitor>({ id: '', name: '', code: '', category: '', start_at: '', end_at: '', identifier: '', isDailyAccept: false });
   const [caption, setCaption] = React.useState<string>('');
 
   // 入場者の表示リストを更新
   useEffect(() => {
+    // カテゴリーで絞り込み
     let newList: typeof dispVisitorList = JSON.parse(JSON.stringify(props.visitorList));
-    if (['runner', 'commentator', 'volunteer', 'guest'].includes(date)) {
-      newList = newList.filter((item) => item.type === date);
-    } else {
-      newList = newList.filter((item) => item.date === date);
+    newList = newList.filter((item) => item.category === selectedCategory);
+
+    // 受付数
+    const allNum = newList.length;
+    const acceptedNum = newList.filter((item) => acceptedList[item.code]).length;
+
+    // 表示種別で絞り込み
+    switch (dispType) {
+      case DISP_TYPE.ALL:
+        break;
+      case DISP_TYPE.ACCEPTED:
+        newList = newList.filter((item) => acceptedList[item.code]);
+        break;
+      case DISP_TYPE.NOT_ACCEPTED:
+        newList = newList.filter((item) => !acceptedList[item.code]);
+        break;
     }
+
+    // 名前順でソート
     newList = newList.sort((a, b) => {
       if (a.name.toString() > b.name.toString()) return 1;
       if (a.name.toString() < b.name.toString()) return -1;
       return 0;
     });
-    const allNum = newList.length;
-    const acceptedNum = newList.filter((item) => acceptedList[item.code]).length;
-
-    // 表示種別
-    switch (dispType) {
-      case 0:
-        break;
-      case 1:
-        newList = newList.filter((item) => acceptedList[item.code]);
-        break;
-      case 2:
-        newList = newList.filter((item) => !acceptedList[item.code]);
-        break;
-    }
 
     // console.log(newList);
     setDispVisitorList(newList);
     setCaption(`受付数： ${acceptedNum} / ${allNum}`);
-  }, [JSON.stringify(props.visitorList), JSON.stringify(acceptedList), date, dispType]);
+  }, [JSON.stringify(props.visitorList), JSON.stringify(acceptedList), selectedCategory, dispType]);
 
   useEffect(() => {
     const newList: typeof acceptedList = {};
@@ -82,8 +86,8 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
     setAcceptedList(newList);
   }, [JSON.stringify(props.acceptedList)]);
 
-  const changeDate = (event: SelectChangeEvent<string>, child: React.ReactNode) => {
-    setDate(event.target.value);
+  const changeCategory = (event: SelectChangeEvent<string>, child: React.ReactNode) => {
+    setCategory(event.target.value);
   };
 
   const changeDispType = () => {
@@ -115,6 +119,15 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
     }
   };
 
+  // 単体表示モーダル 表示切り替え
+  const showModal = (visitor: Visitor) => () => {
+    setShowVisitor(visitor);
+    setIsShowModal(true);
+  };
+  const closeModal = () => {
+    setIsShowModal(false);
+  };
+
   const createList = () => {
     return <>{dispVisitorList.map(createVisitorList)}</>;
   };
@@ -144,27 +157,17 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
         <div className={'header'}>
           <div className={'header-inner'}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: 5, background: props.theme === 'dark' ? 'rgb(21, 32, 43)' : 'white' }}>
-              <Select value={date} onChange={changeDate}>
-                <MenuItem key={'runner'} value={'runner'}>
-                  走者
-                </MenuItem>
-                <MenuItem key={'commentator'} value={'commentator'}>
-                  解説
-                </MenuItem>
-                <MenuItem key={'volunteer'} value={'volunteer'}>
-                  会場ボランティア
-                </MenuItem>
-                <MenuItem key={'guest'} value={'guest'}>
-                  ゲスト
-                </MenuItem>
-                {props.dateList.map((date) => {
+              {/* 入場者種別 */}
+              <Select value={selectedCategory} onChange={changeCategory}>
+                {categories.map((category) => {
                   return (
-                    <MenuItem key={date} value={date}>
-                      観客：{date}
+                    <MenuItem key={category} value={category}>
+                      {category}
                     </MenuItem>
                   );
                 })}
               </Select>
+              {/* 表示種別 */}
               <div>
                 <Button style={{ height: '100%' }} variant={'contained'} onClick={changeDispType}>
                   {dispTypeToTxt(dispType)}
@@ -185,12 +188,12 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
         <div style={{ float: 'right', marginTop: -50, marginRight: 20, bottom: 0, position: 'sticky' }}>{props.status === 'processing' ? <CircularProgress /> : ''}</div>
       </div>
 
+      {/* 単体表示 */}
       <Modal open={isShowModal} modalClose={closeModal}>
         <Paper style={{ height: '150px', width: '300px', padding: 20, maxWidth: '600px' }}>
           <div>名前：{showVisitor.name}</div>
-          <div>区分：{typeToStr(showVisitor.type)}</div>
-          <div>フォーム更新日時：{converDate(showVisitor.timestamp)}</div>
-          <div style={{ color: 'red', fontWeight: 400 }}>{showVisitor.isCancel ? 'キャンセル済' : ''}</div>
+          <div>区分：{showVisitor.category}</div>
+          <div>コード：{showVisitor.code}</div>
           <div>受付日時：{converDate(acceptedList[showVisitor.code])}</div>
         </Paper>
       </Modal>
@@ -202,7 +205,6 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
 const mapStateToProps = (state: RootState) => {
   return {
     status: state.notify.status,
-    dateList: state.content.config.date,
     visitorList: state.content.visitorList,
     acceptedList: state.content.acceptedList,
     theme: state.content.theme.mode,

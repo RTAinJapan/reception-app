@@ -64,24 +64,6 @@ export const compColor = (baseColor: string) => {
   return color.cssRGB();
 };
 
-export const typeToStr = (visitor?: Visitor['type']) => {
-  if (!visitor) return '';
-  switch (visitor) {
-    case 'runner':
-      return '走者';
-    case 'commentator':
-      return '解説';
-    case 'volunteer':
-      return 'ボランティア';
-    case 'visitor':
-      return '観客';
-    case 'guest':
-      return 'ゲスト';
-    default:
-      return 'その他';
-  }
-};
-
 export const converDate = (timeStr: string) => {
   if (!timeStr) return '';
 

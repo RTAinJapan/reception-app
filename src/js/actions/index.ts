@@ -62,7 +62,7 @@ export const updateVisitorList = createAction(UPDATE_VISITOR_LIST, (action) => {
 
 const CALL_UPDATE_ACCEPTED_LIST = 'CALL_UPDATE_ACCEPTED_LIST';
 export const callPostReception = createAction(CALL_UPDATE_ACCEPTED_LIST, (action) => {
-  return (obj: { name: string; date: string; code: string }) => action(obj);
+  return (obj: { name: string; category: string; code: string }) => action(obj);
 });
 
 const UPDATE_ACCEPTED_LIST = 'UPDATE_ACCEPTED_LIST';

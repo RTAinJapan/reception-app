@@ -13,6 +13,7 @@ export default function* rootSaga() {
   yield call(updateAccepted);
 }
 
+/** Config取得 */
 function* initConfig() {
   try {
     const json: RootState['content']['config'] = yield call(fetchJson, './config.json?t=' + new Date().getTime());
@@ -23,16 +24,14 @@ function* initConfig() {
   }
 }
 
+/** 全入場者のリストを更新 */
 function* updateVisitorList() {
   try {
     const state: RootState = yield select();
 
-    const visitor: Visitor[] = yield call(fetchJson, state.content.config.data.visitor + '?t=' + new Date().getTime());
-    const runner: Visitor[] = yield call(fetchJson, state.content.config.data.runner + '?t=' + new Date().getTime());
-    const commentator: Visitor[] = yield call(fetchJson, state.content.config.data.commentator + '?t=' + new Date().getTime());
-    const volunteer: Visitor[] = yield call(fetchJson, state.content.config.data.volunteer + '?t=' + new Date().getTime());
-    const guest: Visitor[] = yield call(fetchJson, state.content.config.data.guest + '?t=' + new Date().getTime());
-    const visitorList: Visitor[] = [...visitor, ...runner, ...commentator, ...volunteer, ...guest];
+    const visitor: Visitor[] = yield call(fetchJson, state.content.config.api.visitor + '?t=' + new Date().getTime());
+    const badgeholder: Visitor[] = yield call(fetchJson, state.content.config.api.badgeholder + '?t=' + new Date().getTime());
+    const visitorList: Visitor[] = [...visitor, ...badgeholder];
     yield put(actions.updateVisitorList(visitorList));
 
     yield put(actions.updateStatus('ok'));
@@ -48,7 +47,7 @@ function* updateAccepted() {
     const json: {
       status: string;
       data: Accepted[];
-    } = yield call(fetchJson, state.content.config.data.accepted + '?t=' + new Date().getTime());
+    } = yield call(fetchJson, state.content.config.api.accepted + '?t=' + new Date().getTime());
     if (json.status === 'ok') {
       yield put(actions.updateAcceptedList(json.data));
     }
@@ -74,16 +73,21 @@ function* errorHandler(error: any) {
 export function* postReception(action: ReturnType<typeof actions.callPostReception>) {
   try {
     const state: RootState = yield select();
-    const formKey = state.content.config.api.formKey;
-    const body: any = {};
-    body[formKey.name] = action.payload.name;
-    body[formKey.date] = action.payload.date;
-    body[formKey.code] = action.payload.code;
+    const body: any = action.payload;
 
-    const baseurl = state.content.config.api.reception;
-    yield call(postJson, `${baseurl}`, body);
+    const baseurl = state.content.config.api.accepted;
+    const json: {
+      status: string;
+      data: any;
+    } = yield call(postJson, `${baseurl}`, body);
 
-    yield call(updateAccepted);
+    // レスポンスを保存
+    if (json.status === 'ok') {
+      yield put(actions.updateAcceptedList(json.data));
+      yield put(actions.updateStatus('ok'));
+    } else {
+      yield put(actions.updateStatus('error'));
+    }
   } catch (e) {
     console.error(e);
   }
