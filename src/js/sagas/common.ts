@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
-import { Visitor } from '../types/global';
 import { Color } from './Color';
 
 /**

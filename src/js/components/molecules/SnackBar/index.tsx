@@ -70,7 +70,7 @@ export type CustomeProps = {
 };
 
 type PropsType = ReturnType<typeof mapStateToProps>;
-const CustomizedSnackbars: React.SFC<CustomeProps> = (props: CustomeProps & PropsType) => {
+const CustomizedSnackbars: React.FC<CustomeProps> = (props: CustomeProps & PropsType) => {
   const classes = innerStyle(props.theme);
   const Icon = variantIcon[props.variant];
 
@@ -100,10 +100,10 @@ const CustomizedSnackbars: React.SFC<CustomeProps> = (props: CustomeProps & Prop
         action={
           props.closable
             ? [
-                <IconButton key="close" color="inherit" className={classes.close} onClick={props.onClose as any}>
-                  <CloseIcon className={classes.icon} />
-                </IconButton>,
-              ]
+              <IconButton key="close" color="inherit" className={classes.close} onClick={props.onClose as any}>
+                <CloseIcon className={classes.icon} />
+              </IconButton>,
+            ]
             : []
         }
       />

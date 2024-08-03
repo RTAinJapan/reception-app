@@ -4,7 +4,6 @@ import { makeStyles } from '@mui/styles';
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
 import jsQR from 'jsqr';
-import { QRCodeRenderersOptions } from 'qrcode';
 import { Button, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
 import { stopRecogQR } from '../../../common/util';
 import { Visitor } from '../../../types/global';
@@ -22,7 +21,7 @@ type ComponentProps = ReturnType<typeof mapStateToProps>;
 type ActionProps = typeof mapDispatchToProps;
 
 type PropsType = ComponentProps & ActionProps;
-const App: React.SFC<PropsType> = (props: PropsType) => {
+const App: React.FC<PropsType> = (props: PropsType) => {
   const classes = useStyles();
 
   const [deviceList, setDeviceList] = React.useState<MediaDeviceInfo[]>([]);
@@ -70,8 +69,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   };
 
   const pickVideoDevice = async () => {
-    let devices = await navigator.mediaDevices.enumerateDevices();
-    devices = devices.filter((device) => device.kind.includes('videoinput'));
+    const devices = (await navigator.mediaDevices.enumerateDevices()).filter((device) => device.kind.includes('videoinput'));
     console.log(`使用可能なデバイス数: ${devices.length}`);
     console.log(devices);
     return devices;
@@ -87,7 +85,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
       console.log('startRecogQr deviceId=' + targetDeviceId);
       stopRecogQR();
 
-      let devices = await pickVideoDevice();
+      const devices = await pickVideoDevice();
       setDeviceList(devices);
 
       if (devices.length === 0) {
@@ -126,9 +124,9 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
             max: 2,
           };
 
-      console.log("srcObject を停止");
       const srcObj = document.querySelector('video')!.srcObject as MediaStream;
       if (srcObj) {
+        console.log("srcObject を停止");
         srcObj.getTracks().map((item) => item.stop());
       }
 
@@ -249,6 +247,26 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
           </div>
           {visitor && (
             <>
+              {/* 名前 */}
+              {
+                !visitor.category.includes("観客") && (
+                  <div style={{ marginBottom: 10 }}>
+                    <Typography variant="h4">
+                      {visitor.name}
+                    </Typography>
+                  </div>
+                )
+              }
+
+              {/* 入場区分 */}
+              <div style={{ marginBottom: 10 }}>
+                <Typography variant="h5">
+                  {types.map((item, index) => (
+                    <div key={`key_type_${index}`}>{item}</div>
+                  ))}
+                </Typography>
+              </div>
+
               {isExpired && (
                 <div style={{ marginBottom: 10, color: 'red' }}>
                   <Typography variant="h5">コードが有効期限外です</Typography>
@@ -259,15 +277,6 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
               <div style={{ marginBottom: 10 }}>
                 <Typography variant="caption">
                   {convertDate(visitor.start_at)}〜{convertDate(visitor.end_at)}
-                </Typography>
-              </div>
-
-              {/* 入場区分 */}
-              <div style={{ marginBottom: 10 }}>
-                <Typography variant="h5">
-                  {types.map((item, index) => (
-                    <div key={`key_type_${index}`}>{item}</div>
-                  ))}
                 </Typography>
               </div>
 

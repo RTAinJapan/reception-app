@@ -250,7 +250,8 @@ export class Color {
   // --- Modifiers ----------------------------------
 
   saturate(v: string | number): void {
-    if ('string' == typeof v && v.indexOf('%') > -1 && (v = parseInt(v)) != NaN) this.s += v / 100;
+    const v2 = parseInt(v as any);
+    if ('string' == typeof v && v.indexOf('%') > -1 && !Number.isNaN(v2)) this.s += v2 / 100;
     else if ('number' == typeof v)
       // range 255
       this.s += v / 255;
@@ -263,7 +264,8 @@ export class Color {
     this.saturate('-' + v);
   }
   lighten(v: string | number): void {
-    if ('string' == typeof v && v.indexOf('%') > -1 && (v = parseInt(v)) != NaN) this.l += v / 100;
+    const v2 = parseInt(v as any);
+    if ('string' == typeof v && v.indexOf('%') > -1 && !Number.isNaN(v2)) this.l += v2 / 100;
     else if ('number' == typeof v)
       // range 255
       this.l += v / 255;
@@ -276,7 +278,8 @@ export class Color {
     this.lighten('-' + v);
   }
   fadein(v: string | number): void {
-    if ('string' == typeof v && v.indexOf('%') > -1 && (v = parseInt(v)) != NaN) this.a += v / 100;
+    const v2 = parseInt(v as any);
+    if ('string' == typeof v && v.indexOf('%') > -1 && !Number.isNaN(v2)) this.a += v2 / 100;
     else if ('number' == typeof v)
       // range 255
       this.a += v / 255;
@@ -289,7 +292,8 @@ export class Color {
     this.fadein('-' + v);
   }
   spin(v: string | number): void {
-    if ('string' == typeof v && v.indexOf('%') > -1 && (v = parseInt(v)) != NaN) this.h += v / 100;
+    const v2 = parseInt(v as any);
+    if ('string' == typeof v && v.indexOf('%') > -1 && !Number.isNaN(v2)) this.h += v2 / 100;
     else if ('number' == typeof v)
       // range 360
       this.h += v / 360;
@@ -384,12 +388,14 @@ export class Color {
       for (let i = 0; i < arguments.length; i++) {
         let c = arguments[i];
         if ('string' == typeof c && c.indexOf('%') > -1) {
-          if ((c = parseInt(c)) == NaN) throw new Error('Bad format');
+          c = parseInt(c);
+          if (Number.isNaN(c)) throw new Error('Bad format');
           if (c < 0 || c > 100) throw new Error('Bad format');
           o[i] = c / 100;
         } else {
           // console.log( 'allAreFrac', allAreFrac, arguments );
-          if ('string' == typeof c && (c = parseInt(c)) == NaN) throw new Error('Bad format');
+          c = parseInt(c);
+          if ('string' == typeof c && Number.isNaN(c)) throw new Error('Bad format');
           if (c < 0) throw new Error('Bad format');
           //else if( allAreFrac ) o[i] = c; // c >= 0 && c <= 1 (all)
           else if (c >= 0 && c < 1) o[i] = c;
@@ -405,19 +411,21 @@ export class Color {
 
     HSL: function (...args: Array<string | number>): Array<number> {
       if (arguments.length < 3 || arguments.length > 4) throw new Error('3 or 4 arguments required');
-      let h = arguments[0],
+      let h = parseFloat(arguments[0]),
         s = arguments[1],
         l = arguments[2];
-      if ('string' == typeof h && (h = parseFloat(h)) == NaN) throw new Error('Bad format for hue');
+      if (Number.isNaN(h)) throw new Error('Bad format for hue');
       if (h < 0 || h > 360) throw new Error('Hue out of range (0..360)');
       else if ((('' + h).indexOf('.') > -1 && h > 1) || ('' + h).indexOf('.') == -1) h /= 360;
       if ('string' == typeof s && s.indexOf('%') > -1) {
-        if ((s = parseInt(s)) == NaN) throw new Error('Bad format for saturation');
+        s = parseInt(s);
+        if (Number.isNaN(s)) throw new Error('Bad format for saturation');
         if (s < 0 || s > 100) throw new Error('Bad format for saturation');
         s /= 100;
       } else if (s < 0 || s > 1) throw new Error('Bad format for saturation');
       if ('string' == typeof l && l.indexOf('%') > -1) {
-        if ((l = parseInt(l)) == NaN) throw new Error('Bad format for lightness');
+        l = parseInt(l);
+        if (Number.isNaN(l)) throw new Error('Bad format for lightness');
         if (l < 0 || l > 100) throw new Error('Bad format for lightness');
         l /= 100;
       } else if (l < 0 || l > 1) throw new Error('Bad format for lightness');

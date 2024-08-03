@@ -27,6 +27,6 @@
     "acceptance-tests",
     "webpack",
     "jest",
-    "eslint.config.js"
+    "eslint.config.mjs"
   ]
 }
