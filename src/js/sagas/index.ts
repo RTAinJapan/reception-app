@@ -59,7 +59,10 @@ function* updateVisitorList() {
     }
     if (badgeholder.status === 'ok') {
       console.log('fetch badgeholder: ok');
-      visitorList.push(...badgeholder.data);
+      visitorList.push(
+        ...badgeholder.data.map((item) => {
+          return {...item, isDailyAccept: false };
+      }));
     } else {
       isError = true;
     }
@@ -140,7 +143,7 @@ export function* fetchVisitorList(action: ReturnType<typeof actions.fetchVisitor
   try {
     yield call(updateVisitorList);
     yield call(updateAccepted);
-    yield put(actions.changeNotify(true, 'info', '更新完了'));
+    // yield put(actions.changeNotify(true, 'info', '更新完了'));
   } catch (e) {
     errorHandler(e);
   }

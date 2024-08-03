@@ -4,10 +4,9 @@ import { makeStyles } from '@mui/styles';
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
 import jsQR from 'jsqr';
-import { Button, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
+import { MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
 import { stopRecogQR } from '../../../common/util';
 import { Visitor } from '../../../types/global';
-import { convertDate } from '../../../sagas/common';
 
 const useStyles = () =>
   makeStyles({
@@ -28,17 +27,38 @@ const App: React.FC<PropsType> = (props: PropsType) => {
   const [renderDeviceId, setDeviceId] = React.useState(props.readerDeviceId);
   const [qrData, setQrData] = React.useState<{ byte: number[]; data: string; version: number } | null>(null);
 
+  const [visitorList, setVisitorList] = React.useState<typeof props.visitorList>([]);
+  const [acceptedList, setAcceptedList] = React.useState<typeof props.acceptedList>([]);
+  const [acceptedIdentifier, setAcceptedIdentifier] = React.useState<typeof props.acceptedIdentifier>([]);
+
+  const [successAudio] = React.useState<HTMLAudioElement>(new Audio("./sound/success.mp3"));
+  const [failAudio] = React.useState<HTMLAudioElement>(new Audio("./sound/fail.mp3"));
+
   useEffect(() => {
     startRecogQr();
   }, []);
+
+  useEffect(() => {
+    // 1分ごとにデータ更新
+    setInterval(() => {
+      // 認識結果表示中の時はスキップ
+      if (!qrData) {
+        props.fetchVisitorList();
+      }
+    }, 60 * 1000);
+  }, []);
+
+  useEffect(() => setVisitorList(props.visitorList), [props.visitorList.join("")]);
+  useEffect(() => setAcceptedList(props.acceptedList), [props.acceptedList.join("")]);
+  useEffect(() => setAcceptedIdentifier(props.acceptedIdentifier), [props.acceptedIdentifier.join("")]);
 
   const handleCancelReader = () => {
     setQrData(null);
     startRecogQr(renderDeviceId);
   };
 
-  /** コード承認ボタン */
-  const handleConfirmQr = (visitor: Visitor) => () => {
+  /** コード承認 */
+  const handleConfirmQr = (visitor: Visitor) => {
     props.postReception({
       name: visitor.name,
       category: visitor.category,
@@ -55,15 +75,13 @@ const App: React.FC<PropsType> = (props: PropsType) => {
         });
       });
     }
-
-    // 認識再開
     setQrData(null);
     startRecogQr(renderDeviceId);
   };
 
   /** identifierを同じくする他の入場者情報（役職違いとか）を抽出。引数指定したやつは返さない */
   const pickIdentifier = (visitor: Visitor): Visitor[] => {
-    const result = props.visitorList.filter((item) => item.code !== visitor.code && item.identifier === visitor.identifier);
+    const result = visitorList.filter((item) => item.code !== visitor.code && item.identifier === visitor.identifier);
     console.log(`pickIdentifier=${result.length}`);
     return result;
   };
@@ -157,7 +175,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
 
       const video = document.querySelector('video') as HTMLVideoElement;
       const canv = document.createElement('canvas');
-      canv.width = 720;
+      canv.width = Math.max(720, window.innerWidth);
       canv.height = 720;
       const context = canv.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
 
@@ -189,11 +207,17 @@ const App: React.FC<PropsType> = (props: PropsType) => {
   };
 
   const createQrReader = () => {
+    console.log("createQrReader");
+
     return (
       <div style={{ height: '100%' }}>
-        <video id="qrReader" autoPlay playsInline={true} className="qr_reader" width={720} height={720}></video>
-        <div style={{ position: 'absolute', bottom: 70, width: '90%', margin: '5%' }}>
-          <Typography variant={'h6'}>カメラデバイス選択</Typography>
+        <div style={{ marginTop: 20, marginBottom: 20, textAlign: 'center' }}>
+          <Typography variant="h3">QRコードをかざしてください。</Typography>
+          <Typography variant="h3">Scan the QR code.</Typography>
+        </div>
+        <video id="qrReader" autoPlay playsInline={true} className="qr_reader" width={Math.max(720, window.innerWidth)} height={720}></video>
+        <div style={{ position: 'absolute', bottom: 70, width: '90%' }}>
+          <Typography variant={'h6'}>Device</Typography>
           <Select defaultValue={renderDeviceId} onChange={changeDeviceId} style={{ width: '90%' }}>
             {deviceList.map((item, index) => {
               return (
@@ -209,20 +233,18 @@ const App: React.FC<PropsType> = (props: PropsType) => {
   };
 
   const createQrResult = () => {
-    const byte = qrData?.byte ?? [];
+    console.log("createQrResult");
+
     const txt = qrData?.data ?? '';
-    // const binStr = byte.map((item) => `00${item.toString(16)}`.slice(-2)).join('');
-    // const version = qrData?.version ?? 0;
-    // const options: QRCodeRenderersOptions = {
-    //   errorCorrectionLevel: 'M',
-    //   margin: 2,
-    //   width: 300,
-    // };
 
     // 読み取ったコードをリストの中から探索
-    const visitor = props.visitorList.find((item) => item.code === txt);
+    const visitor = visitorList.find((item) => item.code === txt);
+    console.log(visitor);
+
     const types: Visitor['category'][] = [];
     let isExpired = false;
+    let isUsed = false;
+    let isVisitor = false;
     if (visitor) {
       // 入場コードが有効な期限かをチェック
       const now = new Date().getTime();
@@ -237,79 +259,82 @@ const App: React.FC<PropsType> = (props: PropsType) => {
         // 他の役職を抽出
         types.push(...pickIdentifier(visitor).map((item) => item.category));
       }
+
+      // 使用済みコード
+      isUsed = acceptedList.map((item) => item.code).includes(visitor.code);
+
+      // 観客であるか
+      isVisitor = visitor.isDailyAccept;
+    }
+
+    console.log(`isExpired=${isExpired} isUsed=${isUsed} isVisitor=${isVisitor}`)
+    setTimeout(() => {
+      if (visitor && !isExpired && !(!isUsed && !isVisitor)) {
+        // 認証
+        handleConfirmQr(visitor);
+      } else {
+        handleCancelReader();
+      }
+    }, 2500);
+
+
+
+    const createContent = () => {
+      console.log("createContent");
+
+      // QRに該当無し
+      if (!visitor) {
+        failAudio.play();
+
+        return (
+          <div style={{ marginBottom: 50, backgroundColor: "#FF97C2" }}>
+            <Typography variant="h3">無効なQRコードです。入場できません。</Typography>
+            <Typography variant="h3">Invalid QR code.</Typography>
+          </div>
+        )
+      }
+
+      if (isExpired) {
+        failAudio.play();
+
+        return (
+          <div style={{ marginBottom: 50, backgroundColor: "#FF97C2" }}>
+            <Typography variant="h3">QRコードが有効期限外です。入場できません。</Typography>
+            <Typography variant="h3">Expired QR code.</Typography>
+          </div>
+        )
+      }
+
+      // 未使用、かつ観客以外
+      // 名札持ちがまだ入場してない場合は受付で認証してもらう
+      if (!isUsed && !isVisitor) {
+        failAudio.play();
+
+        return (
+          <div style={{ marginBottom: 50, backgroundColor: "#FFFF99" }}>
+            <Typography variant="h3">受付で認証してください。</Typography>
+            <Typography variant="h3">Ask staff to reception.</Typography>
+          </div>
+        )
+      }
+
+      successAudio.play();
+      return (
+        <div style={{ marginBottom: 10 }}>
+          <Typography variant="h3">
+            入場してください。
+          </Typography>
+          <Typography variant="h3">
+            Enter the Room.
+          </Typography>
+        </div>
+      )
     }
 
     return (
       <div style={{ textAlign: 'center', height: '100%' }}>
         <div style={{ top: 100, position: 'sticky' }}>
-          <div style={{ marginBottom: 50 }}>
-            <Typography variant="h3">{visitor ? "" : '未登録者'}</Typography>
-          </div>
-          {visitor && (
-            <>
-              {/* 名前 */}
-              {
-                !visitor.category.includes("観客") && (
-                  <div style={{ marginBottom: 10 }}>
-                    <Typography variant="h4">
-                      {visitor.name}
-                    </Typography>
-                  </div>
-                )
-              }
-
-              {/* 入場区分 */}
-              <div style={{ marginBottom: 10 }}>
-                <Typography variant="h5">
-                  {types.map((item, index) => (
-                    <div key={`key_type_${index}`}>{item}</div>
-                  ))}
-                </Typography>
-              </div>
-
-              {isExpired && (
-                <div style={{ marginBottom: 10, color: 'red' }}>
-                  <Typography variant="h5">コードが有効期限外です</Typography>
-                </div>
-              )}
-
-              {/* 有効期限 */}
-              <div style={{ marginBottom: 10 }}>
-                <Typography variant="caption">
-                  {convertDate(visitor.start_at)}〜{convertDate(visitor.end_at)}
-                </Typography>
-              </div>
-
-              {/* コード */}
-              <div style={{ marginBottom: 10 }}>
-                <Typography variant="caption">
-                  {visitor.code}
-                </Typography>
-              </div>
-
-              {/* 使用済みコードかどうか */}
-              <div style={{ marginBottom: 50 }}>
-                <Typography variant="h5" style={{ color: 'red' }}>
-                  {props.acceptedList.map((item) => item.code).includes(visitor.code) ? '使用済コード' : ''}
-                </Typography>
-              </div>
-
-              <div style={{ marginBottom: 50 }}>
-                <Typography variant="h5">{props.acceptedIdentifier.includes(visitor.identifier) ? '入場経験済' : ''}</Typography>
-              </div>
-            </>
-          )}
-        </div>
-        {/* ボタン類 */}
-        <div style={{ position: 'fixed', bottom: 120, left: '25%' }}>
-          {visitor && (
-            <Button variant="contained" color="info" onClick={handleConfirmQr(visitor)} style={{ margin: 10 }}>
-              承認
-            </Button>
-          )}
-          <Button variant="contained" color="error" onClick={handleCancelReader} style={{ margin: 10 }}>
-            キャンセル
-          </Button>
+          {createContent()}
         </div>
       </div>
     );
@@ -333,6 +358,7 @@ const mapDispatchToProps = {
   updateDeviceId: actions.updateReaderDevice,
   changeNotify: actions.changeNotify,
   postReception: actions.callPostReception,
+  fetchVisitorList: actions.fetchVisitorList,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);
