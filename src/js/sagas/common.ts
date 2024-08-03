@@ -49,7 +49,8 @@ export const compColor = (baseColor: string) => {
   return color.cssRGB();
 };
 
-export const converDate = (timeStr: string) => {
+/** 日時を表示用に整形 */
+export const convertDate = (timeStr: string) => {
   if (!timeStr) return '';
 
   const date = new Date(timeStr);

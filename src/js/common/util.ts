@@ -54,11 +54,18 @@ export async function fetchJson<T>(url: string): Promise<T> {
  */
 export const stopRecogQR = () => {
   try {
+    if(!window.codeReaderTimer) return;
     console.log(`stopRecogQR id=${window.codeReaderTimer}`);
     clearInterval(window.codeReaderTimer);
-    const dom = (document.querySelector('video')!.srcObject as MediaStream).getVideoTracks()[0].stop();
+    const dom = (document.querySelector('video')!.srcObject as MediaStream)?.getVideoTracks();
+    if(dom) {
+      dom[0].stop();
+    } else {
+      console.warn("video tracksの取得に失敗");
+    }
   } catch (e) {
     // ビデオがまだ無いときとかにここに来るが、気にしない
+    console.warn(e);
   }
 };
 

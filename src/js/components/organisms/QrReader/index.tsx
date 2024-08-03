@@ -8,7 +8,7 @@ import { QRCodeRenderersOptions } from 'qrcode';
 import { Button, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
 import { stopRecogQR } from '../../../common/util';
 import { Visitor } from '../../../types/global';
-import { converDate as convertDate } from '../../../sagas/common';
+import { convertDate } from '../../../sagas/common';
 
 const useStyles = () =>
   makeStyles({
@@ -69,104 +69,119 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
     return result;
   };
 
+  const pickVideoDevice = async () => {
+    let devices = await navigator.mediaDevices.enumerateDevices();
+    devices = devices.filter((device) => device.kind.includes('videoinput'));
+    console.log(`使用可能なデバイス数: ${devices.length}`);
+    console.log(devices);
+    return devices;
+  }
+
   /**
    * QRコードの認識開始
    */
   const startRecogQr = async (deviceId = '') => {
-    let targetDeviceId = deviceId ? deviceId : renderDeviceId;
-    console.log('startRecogQr deviceId=' + targetDeviceId);
-    stopRecogQR();
+    try {
 
-    let devices = await navigator.mediaDevices.enumerateDevices();
-    devices = devices.filter((device) => device.kind.includes('videoinput'));
-    console.log(devices);
-    setDeviceList(devices);
+      let targetDeviceId = deviceId ? deviceId : renderDeviceId;
+      console.log('startRecogQr deviceId=' + targetDeviceId);
+      stopRecogQR();
 
-    if (devices.length === 0) {
-      console.log('ビデオ入力デバイスが無い');
-      alert('カメラ情報が取得できませんでした');
-      return;
-    }
+      let devices = await pickVideoDevice();
+      setDeviceList(devices);
 
-    if (!devices.find((item) => item.deviceId === targetDeviceId)) {
-      console.log(`適切なデバイスが選択されなかった。 targetDeviceId=${targetDeviceId}`);
+      if (devices.length === 0) {
+        console.log('ビデオ入力デバイスが無い');
+        alert('カメラ情報が取得できませんでした');
+        return;
+      }
 
-      // 適当なカメラにfallbackする
-      let device = devices.find((item) => item.label.includes('背面'));
-      if (device) {
-        targetDeviceId = device.deviceId;
-      } else {
-        device = devices.find((item) => item.label.includes('env'));
+      if (!devices.find((item) => item.deviceId === targetDeviceId)) {
+        console.log(`適切なデバイスが選択されなかった。 targetDeviceId=${targetDeviceId}`);
+
+        // 適当なカメラにfallbackする
+        let device = devices.find((item) => item.label.includes('背面'));
         if (device) {
           targetDeviceId = device.deviceId;
         } else {
-          targetDeviceId = devices[0].deviceId;
+          device = devices.find((item) => item.label.includes('env'));
+          if (device) {
+            targetDeviceId = device.deviceId;
+          } else {
+            targetDeviceId = devices[0].deviceId;
+          }
         }
       }
-    }
 
-    const aspect =
-      window.innerWidth - window.innerHeight > 0
-        ? {
+      const aspect =
+        window.innerWidth - window.innerHeight > 0
+          ? {
             min: 0.5625,
             ideal: 1.5,
             max: 2,
           }
-        : {
+          : {
             min: 0.5625,
             ideal: 0.75,
             max: 2,
           };
 
-    const srcObj = document.querySelector('video')!.srcObject as MediaStream;
-    if (srcObj) {
-      srcObj.getTracks().map((item) => item.stop());
-    }
-
-    // カメラ起動
-    const mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        aspectRatio: aspect,
-        width: {
-          min: 480,
-          ideal: 1080,
-        },
-        height: {
-          min: 480,
-          ideal: 1080,
-        },
-        deviceId: targetDeviceId ? targetDeviceId : undefined,
-        facingMode: 'environment',
-        frameRate: { ideal: 30, max: 60 },
-      },
-    });
-
-    document.querySelector('video')!.srcObject = mediaStream;
-    console.log(`${document.querySelector('video')!.width}  ${document.querySelector('video')!.height}`);
-
-    const video = document.querySelector('video') as HTMLVideoElement;
-    const canv = document.createElement('canvas');
-    canv.width = 720;
-    canv.height = 720;
-    const context = canv.getContext('2d') as CanvasRenderingContext2D;
-
-    // 認識処理
-    const id = window.setInterval(function () {
-      context.drawImage(video, 0, 0, 720, 720);
-
-      const imageData = context.getImageData(0, 0, 720, 720);
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
-      if (code && code.binaryData.length > 0) {
-        // 読み取れたら結果出力
-        console.log(code);
-        if (code.binaryData.length > 0) {
-          stopRecogQR();
-          setQrData({ byte: code.binaryData, data: code.data, version: code.version });
-        }
+      console.log("srcObject を停止");
+      const srcObj = document.querySelector('video')!.srcObject as MediaStream;
+      if (srcObj) {
+        srcObj.getTracks().map((item) => item.stop());
       }
-    }, 50);
-    window.codeReaderTimer = id;
+
+      // カメラ起動
+      console.log(`カメラ起動 targetDeviceId = ${targetDeviceId}`);
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          aspectRatio: aspect,
+          width: {
+            min: 480,
+            ideal: 1080,
+          },
+          height: {
+            min: 480,
+            ideal: 1080,
+          },
+          deviceId: targetDeviceId ? targetDeviceId : undefined,
+          facingMode: 'environment',
+          frameRate: { ideal: 30, max: 60 },
+        },
+      });
+      console.log("-------------- mediaStream --------------");
+      console.log(mediaStream);
+
+      document.querySelector('video')!.srcObject = mediaStream;
+      console.log(`${document.querySelector('video')!.width}  ${document.querySelector('video')!.height}`);
+
+      const video = document.querySelector('video') as HTMLVideoElement;
+      const canv = document.createElement('canvas');
+      canv.width = 720;
+      canv.height = 720;
+      const context = canv.getContext('2d') as CanvasRenderingContext2D;
+
+      // 認識処理
+      const id = window.setInterval(function () {
+        context.drawImage(video, 0, 0, 720, 720);
+
+        const imageData = context.getImageData(0, 0, 720, 720);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code && code.binaryData.length > 0) {
+          // 読み取れたら結果出力
+          console.log(code);
+          if (code.binaryData.length > 0) {
+            stopRecogQR();
+            setQrData({ byte: code.binaryData, data: code.data, version: code.version });
+          }
+        }
+      }, 50);
+      window.codeReaderTimer = id;
+    } catch (e) {
+      console.warn(e);
+    }
   };
 
   const changeDeviceId = (event: SelectChangeEvent<string>, child: React.ReactNode) => {
@@ -230,18 +245,24 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
       <div style={{ textAlign: 'center', height: '100%' }}>
         <div style={{ top: 100, position: 'sticky' }}>
           <div style={{ marginBottom: 50 }}>
-            <Typography variant="h3">{visitor ? visitor.name : '未登録者'}</Typography>
+            <Typography variant="h3">{visitor ? "" : '未登録者'}</Typography>
           </div>
           {visitor && (
             <>
               {isExpired && (
                 <div style={{ marginBottom: 10, color: 'red' }}>
                   <Typography variant="h5">コードが有効期限外です</Typography>
-                  <Typography variant="caption">
-                    {convertDate(visitor.start_at)}〜{convertDate(visitor.end_at)}
-                  </Typography>
                 </div>
               )}
+
+              {/* 有効期限 */}
+              <div style={{ marginBottom: 10 }}>
+                <Typography variant="caption">
+                  {convertDate(visitor.start_at)}〜{convertDate(visitor.end_at)}
+                </Typography>
+              </div>
+
+              {/* 入場区分 */}
               <div style={{ marginBottom: 10 }}>
                 <Typography variant="h5">
                   {types.map((item, index) => (
@@ -249,6 +270,15 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
                   ))}
                 </Typography>
               </div>
+
+              {/* コード */}
+              <div style={{ marginBottom: 10 }}>
+                <Typography variant="caption">
+                  {visitor.code}
+                </Typography>
+              </div>
+
+              {/* 使用済みコードかどうか */}
               <div style={{ marginBottom: 50 }}>
                 <Typography variant="h5" style={{ color: 'red' }}>
                   {props.acceptedList.map((item) => item.code).includes(visitor.code) ? '使用済コード' : ''}

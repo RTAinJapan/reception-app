@@ -6,7 +6,7 @@ import { Button, CircularProgress, Fab, MenuItem, Paper, Select, SelectChangeEve
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
 import { Visitor } from '../../../types/global';
-import { converDate } from '../../../sagas/common';
+import { convertDate } from '../../../sagas/common';
 import Modal from '../../molecules/Modal';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
@@ -53,7 +53,8 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   useEffect(() => {
     const tmp: string[] = [];
     props.visitorList.map((item) => {
-      if (!tmp.includes(item.category)) {
+      // 観客以外をプルダウンとして表示
+      if (!tmp.includes(item.category) && !item.category.includes("観客")) {
         tmp.push(item.category);
       }
     });
@@ -217,7 +218,8 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
           <div>名前：{showVisitor.name}</div>
           <div>区分：{showVisitor.category}</div>
           <div>コード：{showVisitor.code}</div>
-          <div>受付日時：{converDate(acceptedList[showVisitor.code])}</div>
+          <div>有効期限：{convertDate(showVisitor.start_at)}～{convertDate(showVisitor.end_at)}</div>
+          <div>受付日時：{convertDate(acceptedList[showVisitor.code])}</div>
         </Paper>
       </Modal>
     </>
