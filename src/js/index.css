@@ -118,6 +118,7 @@ select {
   width: 96vw;
   margin-left: -1vw;
   max-height: 70vh;
+  background-color: #000000;
 }
 
 .header {

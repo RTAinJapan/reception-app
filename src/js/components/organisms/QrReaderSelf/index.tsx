@@ -35,7 +35,11 @@ const App: React.FC<PropsType> = (props: PropsType) => {
   const [failAudio] = React.useState<HTMLAudioElement>(new Audio("./sound/fail.mp3"));
 
   useEffect(() => {
-    startRecogQr();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      console.log("enumerateDevices() not supported.");
+    } else {
+      startRecogQr();
+    }
   }, []);
 
   useEffect(() => {
@@ -87,10 +91,14 @@ const App: React.FC<PropsType> = (props: PropsType) => {
   };
 
   const pickVideoDevice = async () => {
-    const devices = (await navigator.mediaDevices.enumerateDevices()).filter((device) => device.kind.includes('videoinput'));
-    console.log(`使用可能なデバイス数: ${devices.length}`);
-    console.log(devices);
-    return devices;
+    try {
+      const device = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = device.filter((device) => device.kind.includes('videoinput'));
+      return videoDevices;
+    } catch (e) {
+      console.warn(e);
+      return [];
+    }
   }
 
   /**
@@ -164,7 +172,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
           },
           deviceId: targetDeviceId ? targetDeviceId : undefined,
           facingMode: 'environment',
-          frameRate: { ideal: 30, max: 60 },
+          frameRate: { ideal: 15, max: 30 },
         },
       });
       console.log("-------------- mediaStream --------------");
@@ -260,8 +268,8 @@ const App: React.FC<PropsType> = (props: PropsType) => {
         types.push(...pickIdentifier(visitor).map((item) => item.category));
       }
 
-      // 使用済みコード
-      isUsed = acceptedList.map((item) => item.code).includes(visitor.code);
+      // 入場経験済みかどうか
+      isUsed = acceptedList.map((item) => item.code).includes(visitor.code) || acceptedIdentifier.includes(visitor.identifier);
 
       // 観客であるか
       isVisitor = visitor.isDailyAccept;
