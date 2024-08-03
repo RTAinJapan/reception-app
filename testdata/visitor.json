@@ -1,0 +1,50 @@
+{
+  "status": "ok",
+  "data": [
+    {
+      "id": 4,
+      "name": "aaaaaaaa",
+      "category": "観客 全日",
+      "start_at": "2023-12-26T00:00:00",
+      "end_at": "2023-12-31T23:59:59",
+      "identifier": "1f52eb6cd80ba5a0825df69686536891",
+      "code": "1040eca25137e140dfaa5b48e05fce93ce"
+    },
+    {
+      "id": 5,
+      "name": "同じメールアドレス",
+      "category": "観客 全日",
+      "start_at": "2023-12-26T00:00:00",
+      "end_at": "2023-12-31T23:59:59",
+      "identifier": "1f52eb6cd80ba5a0825df69686536891",
+      "code": "1022ba13dd21d24ba8a31a6aa0157d19d7"
+    },
+    {
+      "id": 6,
+      "name": "違うアドレス",
+      "category": "観客 全日",
+      "start_at": "2023-12-26T00:00:00",
+      "end_at": "2023-12-31T23:59:59",
+      "identifier": "2a133526666f3684eb72f924f9faa554",
+      "code": "10a39da75e68c745168eb3324ad2dfc52d"
+    },
+    {
+      "id": 7,
+      "name": "RiJのメール",
+      "category": "観客 全日",
+      "start_at": "2023-12-26T00:00:00",
+      "end_at": "2023-12-31T23:59:59",
+      "identifier": "871e09bf9cdc47344e1b2618a6898890",
+      "code": "10b2e5fcedba3a470394858eeb5984418a"
+    },
+    {
+      "id": 8,
+      "name": "Cmatest",
+      "category": "観客 全日",
+      "start_at": "2023-12-26T00:00:00",
+      "end_at": "2023-12-31T23:59:59",
+      "identifier": "daff1f3e5357b40466f456b4bc9a9c2a",
+      "code": "107a34e58186a7497180f0ff10a6d86ae6"
+    }
+  ]
+}

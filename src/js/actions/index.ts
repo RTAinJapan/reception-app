@@ -55,6 +55,11 @@ export const updateReaderDevice = createAction(UPDATE_READER_DEVICE, (action) =>
   return (deviceId: string) => action(deviceId);
 });
 
+const FETCH_VISITOR_LIST = 'FETCH_VISITOR_LIST';
+export const fetchVisitorList = createAction(FETCH_VISITOR_LIST, (action) => {
+  return () => action();
+});
+
 const UPDATE_VISITOR_LIST = 'UPDATE_VISITOR_LIST';
 export const updateVisitorList = createAction(UPDATE_VISITOR_LIST, (action) => {
   return (list: Visitor[]) => action(list);
@@ -62,10 +67,29 @@ export const updateVisitorList = createAction(UPDATE_VISITOR_LIST, (action) => {
 
 const CALL_UPDATE_ACCEPTED_LIST = 'CALL_UPDATE_ACCEPTED_LIST';
 export const callPostReception = createAction(CALL_UPDATE_ACCEPTED_LIST, (action) => {
-  return (obj: { name: string; date: string; code: string }) => action(obj);
+  return (obj: { name: string; category: string; code: string }) => action(obj);
 });
 
 const UPDATE_ACCEPTED_LIST = 'UPDATE_ACCEPTED_LIST';
 export const updateAcceptedList = createAction(UPDATE_ACCEPTED_LIST, (action) => {
   return (list: Accepted[]) => action(list);
+});
+
+// Discord
+const LOGIN_DISCORD = 'LOGIN_DISCORD';
+/** ログインする */
+export const loginDiscord = createAction(LOGIN_DISCORD, (action) => {
+  return () => action();
+});
+
+const LOGOUT_DISCORD = 'LOGOUT_DISCORD';
+/** ログアウトする */
+export const logoutDiscord = createAction(LOGOUT_DISCORD, (action) => {
+  return () => action();
+});
+
+const STORE_DISCORD_USER_NAME = 'STORE_DISCORD_USER_NAME';
+/** Discordのユーザ名を格納 */
+export const storeDiscordUserName = createAction(STORE_DISCORD_USER_NAME, (action) => {
+  return (username: string | null) => action(username);
 });

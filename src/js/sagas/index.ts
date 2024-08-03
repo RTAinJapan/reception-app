@@ -1,40 +1,74 @@
 import { call, put, select, takeEvery } from 'redux-saga/effects';
 import * as actions from '../actions';
 import { RootState } from '../reducers';
-import { Accepted, Visitor } from '../types/global';
+import { loginCheck, logoutDiscord, oauthDiscord } from './discord';
+import { Accepted, CommonResponse, Visitor } from '../types/global';
 import { fetchJson, postJson } from './common';
 
 export default function* rootSaga() {
   yield takeEvery(actions.callPostReception, postReception);
+  yield takeEvery(actions.loginDiscord, oauthDiscord);
+  yield takeEvery(actions.logoutDiscord, logoutDiscord);
+  yield takeEvery(actions.fetchVisitorList, fetchVisitorList);
 
   // DB初期設定
   yield call(initConfig);
+
+  yield call(loginCheck);
+  // yield put(actions.storeDiscordUserName('テストユーザ'));
+
   yield call(updateVisitorList);
   yield call(updateAccepted);
 }
 
+/** Config取得 */
 function* initConfig() {
   try {
     const json: RootState['content']['config'] = yield call(fetchJson, './config.json?t=' + new Date().getTime());
     yield put(actions.updateConfig(json));
-    yield put(actions.updateStatus('ok'));
   } catch (e) {
     yield call(errorHandler, e);
   }
 }
 
+/** 全入場者のリストを更新 */
 function* updateVisitorList() {
   try {
     const state: RootState = yield select();
+    if (!state.content.discord.username) {
+      return;
+    }
 
-    const visitor: Visitor[] = yield call(fetchJson, state.content.config.data.visitor + '?t=' + new Date().getTime());
-    const runner: Visitor[] = yield call(fetchJson, state.content.config.data.runner + '?t=' + new Date().getTime());
-    const commentator: Visitor[] = yield call(fetchJson, state.content.config.data.commentator + '?t=' + new Date().getTime());
-    const volunteer: Visitor[] = yield call(fetchJson, state.content.config.data.volunteer + '?t=' + new Date().getTime());
-    const guest: Visitor[] = yield call(fetchJson, state.content.config.data.guest + '?t=' + new Date().getTime());
-    const visitorList: Visitor[] = [...visitor, ...runner, ...commentator, ...volunteer, ...guest];
+    const visitor: CommonResponse<Visitor[]> = yield call(fetchJson, state.content.config.api.visitor + '?t=' + new Date().getTime(), {
+      'x-app-token': state.content.config.api.token,
+    });
+    const badgeholder: CommonResponse<Visitor[]> = yield call(fetchJson, state.content.config.api.badgeholder + '?t=' + new Date().getTime(), {
+      'x-app-token': state.content.config.api.token,
+    });
+    const visitorList: Visitor[] = [];
+    let isError = false;
+    if (visitor.status === 'ok') {
+      console.log('fetch visitor: ok');
+      visitorList.push(
+        ...visitor.data.map((item) => {
+          return { ...item, isDailyAccept: true };
+        }),
+      );
+    } else {
+      isError = true;
+    }
+    if (badgeholder.status === 'ok') {
+      console.log('fetch badgeholder: ok');
+      visitorList.push(...badgeholder.data);
+    } else {
+      isError = true;
+    }
+    console.log(`入場者数：` + visitorList.length);
     yield put(actions.updateVisitorList(visitorList));
 
+    if (isError) {
+      throw new Error('入場者情報の取得でエラーが発生しました');
+    }
     yield put(actions.updateStatus('ok'));
   } catch (e) {
     yield call(errorHandler, e);
@@ -44,11 +78,17 @@ function* updateVisitorList() {
 function* updateAccepted() {
   try {
     const state: RootState = yield select();
+    if (!state.content.discord.username) {
+      return;
+    }
 
     const json: {
       status: string;
       data: Accepted[];
-    } = yield call(fetchJson, state.content.config.data.accepted + '?t=' + new Date().getTime());
+    } = yield call(fetchJson, state.content.config.api.accepted + '?t=' + new Date().getTime(), {
+      'x-app-token': state.content.config.api.token,
+    });
+    // postのレスポンスは、現在登録されてる全データなのでこれを保持する
     if (json.status === 'ok') {
       yield put(actions.updateAcceptedList(json.data));
     }
@@ -74,17 +114,34 @@ function* errorHandler(error: any) {
 export function* postReception(action: ReturnType<typeof actions.callPostReception>) {
   try {
     const state: RootState = yield select();
-    const formKey = state.content.config.api.formKey;
-    const body: any = {};
-    body[formKey.name] = action.payload.name;
-    body[formKey.date] = action.payload.date;
-    body[formKey.code] = action.payload.code;
+    const body: any = action.payload;
 
-    const baseurl = state.content.config.api.reception;
-    yield call(postJson, `${baseurl}`, body);
+    const baseurl = state.content.config.api.accepted;
+    const json: {
+      status: string;
+      data: any;
+    } = yield call(postJson, `${baseurl}`, body, {
+      'x-app-token': state.content.config.api.token,
+    });
 
-    yield call(updateAccepted);
+    // レスポンスを保存
+    if (json.status === 'ok') {
+      yield put(actions.updateAcceptedList(json.data));
+      yield put(actions.updateStatus('ok'));
+    } else {
+      yield put(actions.updateStatus('error'));
+    }
   } catch (e) {
     console.error(e);
+  }
+}
+
+export function* fetchVisitorList(action: ReturnType<typeof actions.fetchVisitorList>) {
+  try {
+    yield call(updateVisitorList);
+    yield call(updateAccepted);
+    yield put(actions.changeNotify(true, 'info', '更新完了'));
+  } catch (e) {
+    errorHandler(e);
   }
 }

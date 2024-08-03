@@ -8,25 +8,25 @@ type Action = ActionType<typeof actions>;
 export type ContentState = {
   config: {
     api: {
-      reception: string;
-      formKey: {
-        name: string;
-        date: string;
-        code: string;
-      };
-    };
-    /**
-     * 日付のリスト
-     * @example ["12月26日","12月27日"]
-     */
-    date: string[];
-    data: {
       accepted: string;
-      commentator: string;
-      guest: string;
-      runner: string;
       visitor: string;
-      volunteer: string;
+      badgeholder: string;
+      /** APIトークン */
+      token: string;
+    };
+    /** Discordの設定 */
+    discord: {
+      enable: boolean;
+      config: {
+        baseUrl: string;
+        clientId: string;
+        redirectUrl: string;
+        scope: string;
+      };
+      /** サーバID */
+      guild: string;
+      /** この画面を操作できるユーザID。 */
+      users: string[];
     };
   };
 
@@ -41,6 +41,11 @@ export type ContentState = {
     theme: Theme;
   };
 
+  discord: {
+    username: string | null;
+    token: string | null;
+  };
+
   reader: {
     timer: number;
   };
@@ -53,30 +58,33 @@ export type ContentState = {
 export const initial: ContentState = {
   config: {
     api: {
-      reception: '',
-      formKey: {
-        name: '',
-        date: '',
-        code: '',
-      },
-    },
-    date: [],
-    data: {
       accepted: '',
-      commentator: '',
-      guest: '',
-      runner: '',
       visitor: '',
-      volunteer: '',
+      badgeholder: '',
+      token: '',
+    },
+    discord: {
+      enable: true,
+      config: {
+        baseUrl: '',
+        clientId: '',
+        redirectUrl: '',
+        scope: '',
+      },
+      guild: '',
+      users: [],
     },
   },
-
   visitorList: [],
   acceptedList: [],
   acceptedIdentifierList: [],
   theme: {
     mode: 'light',
     theme: customTheme('light'),
+  },
+  discord: {
+    username: null,
+    token: null,
   },
   reader: {
     timer: 0,
@@ -102,6 +110,16 @@ const reducer = (state: ContentState = initial, action: Action): ContentState =>
       return {
         ...state,
         config: action.payload,
+      };
+    }
+
+    case getType(actions.storeDiscordUserName): {
+      return {
+        ...state,
+        discord: {
+          ...state.discord,
+          username: action.payload,
+        },
       };
     }
 

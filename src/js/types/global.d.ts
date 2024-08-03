@@ -8,29 +8,36 @@ export type ArrayItem<T extends any[]> = T extends (infer Titem)[] ? Titem : nev
 export type ResolvedType<T> = T extends Promise<infer R> ? R : T;
 export type GeneratorType<T extends (...args: any) => any> = ResolvedType<ReturnType<T>>;
 
+export type CommonResponse<T> =
+  | {
+      status: 'ok';
+      data: T;
+    }
+  | {
+      status: 'ng';
+      data: string;
+    };
+
 export type Visitor = {
+  /** 連番 */
+  id: string;
   /** 名前 */
   name: string;
-  /** 入場者の種別 */
-  type: 'runner' | 'commentator' | 'volunteer' | 'visitor' | 'guest';
+  /** 入場者区分 */
+  category: string;
+  /** コードの有効期限  start */
+  start_at: string;
+  /** コードの有効期限 end */
+  end_at: string;
   /**
+   * 入場コード
    * @example '11958fb1b6f950444d850b8e4d55447400'
    */
   code: string;
-  /**
-   * Form投稿のタイムスタンプ
-   * @example '2022-07-10T13:00:50.830Z'
-   */
-  timestamp: string;
-  /** キャンセルしたか */
-  isCancel: boolean;
-  /**
-   * 入場日
-   * @example '2022年8月11日'
-   */
-  date: string;
   /** ユーザを識別する情報 */
   identifier: string;
+  /** 日毎に入場処理を必要とする者かどうか。 */
+  isDailyAccept: boolean;
 };
 
 export type Accepted = {
@@ -44,8 +51,12 @@ export type Accepted = {
    * @example "1234567890abcd"
    */
   code: string;
-  /** 日付 */
-  date: string;
+  /**
+   * 入場者種別
+   * @example '走者'
+   * @example '観客 12月25日'
+   */
+  category: string;
   /**
    * 受付時刻
    * @example "2022-08-11T00:18:15.906Z"

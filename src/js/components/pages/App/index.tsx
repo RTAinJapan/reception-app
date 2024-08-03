@@ -7,13 +7,14 @@ import Setting from '../../organisms/Setting';
 import ListIcon from '@mui/icons-material/List';
 import CameraIcon from '@mui/icons-material/QrCode2';
 import SettingIcon from '@mui/icons-material/Settings';
-import { Paper, Theme, ThemeProvider } from '@mui/material';
+import { Button, Paper, Theme, ThemeProvider } from '@mui/material';
 import { RootState } from '../../../reducers';
 import { connect } from 'react-redux';
 import customTheme from '../../../theme';
 import { makeStyles } from '@mui/styles';
 import SnackBar from '../../molecules/SnackBar';
 import Dialog from '../../organisms/Dialog';
+import Modal from '../../molecules/Modal';
 
 const useStyles = (theme: Theme) =>
   makeStyles({
@@ -23,13 +24,16 @@ const useStyles = (theme: Theme) =>
       width: '100%',
       height: '100%',
     },
+    login: {
+      padding: 10,
+    },
   })();
 
 type ComponentProps = ReturnType<typeof mapStateToProps>;
 type ActionProps = typeof mapDispatchToProps;
 
 type PropsType = ComponentProps & ActionProps;
-const App: React.SFC<PropsType> = (props: PropsType) => {
+const App: React.FC<PropsType> = (props: PropsType) => {
   const classes = useStyles(props.theme);
   const tabs = [
     {
@@ -49,13 +53,22 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
     <ThemeProvider theme={props.theme}>
       <Paper className={classes.root}>
         <div className={'SW-update-dialog'} />
-        <NavTabs tabs={tabs} style={{ top: 0 }}>
-          <QrReader />
-          <VisitorList />
-          <Setting />
-        </NavTabs>
+        {props.status !== 'initialize' && props.discord.username ? (
+          <NavTabs tabs={tabs} style={{ top: 0 }}>
+            <QrReader />
+            <VisitorList />
+            <Setting />
+          </NavTabs>
+        ) : (
+          <div className={classes.login}>
+            <Modal open={true}>
+              <Button color={'primary'} variant={'contained'} onClick={props.loginDiscord} disabled={props.status !== 'ok'}>
+                Discordでログイン
+              </Button>
+            </Modal>
+          </div>
+        )}
       </Paper>
-
       {/* 通知系 */}
       <Dialog />
 
@@ -69,13 +82,16 @@ const mapStateToProps = (state: RootState) => {
   return {
     notify: state.notify.notify,
     dialog: state.notify.dialog,
+    discord: state.content.discord,
     theme: customTheme(state.content.theme.mode),
+    status: state.notify.status,
   };
 };
 
 // action
 const mapDispatchToProps = {
   closeNotify: actions.closeNotify,
+  loginDiscord: actions.loginDiscord,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);
