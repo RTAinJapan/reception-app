@@ -221,6 +221,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
       <div style={{ height: '100%' }}>
         <div style={{ marginTop: 20, marginBottom: 20, textAlign: 'center' }}>
           <Typography variant="h3">QRコードをかざしてください。</Typography>
+          <Typography variant="body1">認識しづらいときは、手元のQRコードを拡大してください。</Typography>
           <Typography variant="h3">Scan the QR code.</Typography>
         </div>
         <video id="qrReader" autoPlay playsInline={true} className="qr_reader" width={Math.max(720, window.innerWidth)} height={720}></video>
