@@ -242,9 +242,20 @@ const App: React.FC<PropsType> = (props: PropsType) => {
     return (
       <div style={{ textAlign: 'center', height: '100%' }}>
         <div style={{ top: 100, position: 'sticky' }}>
-          <div style={{ marginBottom: 50 }}>
-            <Typography variant="h3">{visitor ? "" : '未登録者'}</Typography>
-          </div>
+          {/* コードが合致しない人 */}
+          {!visitor && (
+            <>
+              <div style={{ marginBottom: 50 }}>
+                <Typography variant="h3">未登録者</Typography>
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <Typography variant="caption">
+                  {txt}
+                </Typography>
+              </div>
+            </>
+          )}
+          {/* コードが合致する人 */}
           {visitor && (
             <>
               {/* 名前 */}
