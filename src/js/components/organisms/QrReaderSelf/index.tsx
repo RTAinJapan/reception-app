@@ -336,6 +336,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
           <Typography variant="h3">
             Enter the Room.
           </Typography>
+          <img src="./image/rchan_success.gif" width={200} />
         </div>
       )
     }
