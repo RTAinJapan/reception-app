@@ -217,7 +217,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
         <Paper style={{ height: '150px', width: '300px', padding: 20, maxWidth: '600px' }}>
           <div>名前：{showVisitor.name}</div>
           <div>区分：{showVisitor.category}</div>
-          <div>コード：{showVisitor.code}</div>
+          {/* <div>コード：{showVisitor.code}</div> */}
           <div>有効期限：{convertDate(showVisitor.start_at)}～{convertDate(showVisitor.end_at)}</div>
           <div>受付日時：{convertDate(acceptedList[showVisitor.code])}</div>
         </Paper>
