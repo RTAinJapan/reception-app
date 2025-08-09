@@ -121,6 +121,15 @@ select {
   background-color: #000000;
 }
 
+.qr_reader_self {
+  width: 96vw;
+  margin-left: -1vw;
+  max-height: 70vh;
+  background-color: #000000;
+  transform: scaleX(-1);
+}
+
+
 .header {
   position: sticky;
   /* background: linear-gradient(90deg, #fe8ae1 0%, #d79fea 23%, #aabeff 80%, #87cfed 100%); */

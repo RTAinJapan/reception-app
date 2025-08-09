@@ -189,7 +189,9 @@ const App: React.FC<PropsType> = (props: PropsType) => {
 
       // 認識処理
       const id = window.setInterval(function () {
+        // videoを左右反転してcanvasに描画
         context.drawImage(video, 0, 0, 720, 720);
+        context.scale(-1, 1);
 
         const imageData = context.getImageData(0, 0, 720, 720);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
@@ -224,7 +226,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
           <Typography variant="h6">認識しづらいときは、手元のQRコードを拡大してみてください。</Typography>
           <Typography variant="h3">Scan QR code.</Typography>
         </div>
-        <video id="qrReader" autoPlay playsInline={true} className="qr_reader" width={Math.max(720, window.innerWidth)} height={720}></video>
+        <video id="qrReader" autoPlay playsInline={true} className="qr_reader_self" width={Math.max(720, window.innerWidth)} height={720}></video>
         <div style={{ position: 'absolute', bottom: 70, width: '90%' }}>
           <Typography variant={'h6'}>Device</Typography>
           <Select defaultValue={renderDeviceId} onChange={changeDeviceId} style={{ width: '90%' }}>
