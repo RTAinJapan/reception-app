@@ -4,7 +4,7 @@ import { makeStyles } from '@mui/styles';
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
 import jsQR from 'jsqr';
-import { MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
+import { MenuItem, Select, SelectChangeEvent, Typography, Paper } from '@mui/material';
 import { stopRecogQR } from '../../../common/util';
 import { Visitor } from '../../../types/global';
 
@@ -352,7 +352,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
     );
   };
 
-  return <div style={{ height: '100%', padding: 10 }}>{!qrData ? createQrReader() : createQrResult()}</div>;
+  return <Paper style={{ height: '100%', padding: 10 }}>{!qrData ? createQrReader() : createQrResult()}</Paper>;
 };
 
 // state
