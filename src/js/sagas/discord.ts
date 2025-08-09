@@ -108,7 +108,7 @@ export function* loginCheck() {
     }
 
     if (token) {
-      yield put(actions.changeNotify(true, 'info', 'ユーザ情報を取得しています。'));
+      // yield put(actions.changeNotify(true, 'info', 'ユーザ情報を取得しています。'));
       // トークンを元に、ユーザ情報を取得
       const user: DiscordUser = yield call(getCurrentUser);
       const userGuildList: DiscordGuild[] = yield call(getUserGuild);
@@ -124,7 +124,7 @@ export function* loginCheck() {
       if (!config.discord.users.includes(user.id)) throw new Error('操作権限がありません。');
 
       yield put(actions.storeDiscordUserName(user.username));
-      yield put(actions.changeNotify(true, 'info', `ユーザ名：${user.username}`));
+      // yield put(actions.changeNotify(true, 'info', `ユーザ名：${user.username}`));
       console.log('logincheck: ok');
     } else {
       yield call(logoutDiscord);
