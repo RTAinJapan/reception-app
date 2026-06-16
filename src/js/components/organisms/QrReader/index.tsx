@@ -70,88 +70,97 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
   };
 
   /**
+   * カメラ起動を試みる。
+   *
+   * Android Chrome / iOS Safari では、カメラ許可が下りる前の enumerateDevices() は
+   * ラベルが空・videoinput が取得できないことがあるため、必ず getUserMedia() を
+   * 先に呼んで許可とストリームを取得する必要がある。
+   *
+   * 制約は「指定デバイス(exact) → 背面カメラ(facingMode) → 制約なし」の順で
+   * 段階的に緩めて試行し、端末差による OverconstrainedError を回避する。
+   */
+  const getMediaStream = async (targetDeviceId: string): Promise<MediaStream> => {
+    // 必須(min)制約は端末によって満たせず OverconstrainedError になるため ideal のみ指定
+    const baseVideo: MediaTrackConstraints = {
+      width: { ideal: 1080 },
+      height: { ideal: 1080 },
+      frameRate: { ideal: 30 },
+    };
+
+    const attempts: MediaStreamConstraints[] = [];
+    if (targetDeviceId) {
+      // 明示的に選択されたデバイスを最優先
+      attempts.push({ audio: false, video: { ...baseVideo, deviceId: { exact: targetDeviceId } } });
+    }
+    // 背面カメラ優先（iOS Safari では deviceId 指定より facingMode の方が確実）
+    attempts.push({ audio: false, video: { ...baseVideo, facingMode: { ideal: 'environment' } } });
+    // 最後の砦：制約なしで何でもよいので取得（PCのフロントカメラ等）
+    attempts.push({ audio: false, video: true });
+
+    let lastError: unknown;
+    for (const constraints of attempts) {
+      try {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e) {
+        console.warn('getUserMedia に失敗。次の制約で再試行します', constraints, e);
+        lastError = e;
+      }
+    }
+    throw lastError;
+  };
+
+  /**
    * QRコードの認識開始
    */
   const startRecogQr = async (deviceId = '') => {
-    let targetDeviceId = deviceId ? deviceId : renderDeviceId;
+    const targetDeviceId = deviceId ? deviceId : renderDeviceId;
     console.log('startRecogQr deviceId=' + targetDeviceId);
     stopRecogQR();
 
-    let devices = await navigator.mediaDevices.enumerateDevices();
-    devices = devices.filter((device) => device.kind.includes('videoinput'));
-    console.log(devices);
-    setDeviceList(devices);
+    // 既存ストリームを停止
+    const currentVideo = document.querySelector('video') as HTMLVideoElement | null;
+    if (currentVideo && currentVideo.srcObject) {
+      (currentVideo.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
+      currentVideo.srcObject = null;
+    }
 
-    if (devices.length === 0) {
-      console.log('ビデオ入力デバイスが無い');
-      alert('カメラ情報が取得できませんでした');
+    // 1. まず getUserMedia で許可取得＆ストリーム確保（enumerateDevices より先に呼ぶのが重要）
+    let mediaStream: MediaStream;
+    try {
+      mediaStream = await getMediaStream(targetDeviceId);
+    } catch (e) {
+      console.error('カメラを起動できませんでした', e);
+      alert('カメラを起動できませんでした。ブラウザのカメラ利用許可設定をご確認ください。');
       return;
     }
 
-    if (!devices.find((item) => item.deviceId === targetDeviceId)) {
-      console.log(`適切なデバイスが選択されなかった。 targetDeviceId=${targetDeviceId}`);
+    // 2. 許可が下りた後に列挙する。ここで初めてラベルと deviceId が取得できる
+    let devices = await navigator.mediaDevices.enumerateDevices();
+    devices = devices.filter((device) => device.kind === 'videoinput');
+    console.log(devices);
+    setDeviceList(devices);
 
-      // 適当なカメラにfallbackする
-      let device = devices.find((item) => item.label.includes('背面'));
-      if (device) {
-        targetDeviceId = device.deviceId;
-      } else {
-        device = devices.find((item) => item.label.includes('env'));
-        if (device) {
-          targetDeviceId = device.deviceId;
-        } else {
-          targetDeviceId = devices[0].deviceId;
-        }
-      }
+    // 3. 実際に使用中のデバイスを選択状態へ反映（ドロップダウンの表示を実態に合わせる）
+    const activeDeviceId = mediaStream.getVideoTracks()[0]?.getSettings().deviceId ?? '';
+    if (activeDeviceId) {
+      setDeviceId(activeDeviceId);
     }
 
-    const aspect =
-      window.innerWidth - window.innerHeight > 0
-        ? {
-            min: 0.5625,
-            ideal: 1.5,
-            max: 2,
-          }
-        : {
-            min: 0.5625,
-            ideal: 0.75,
-            max: 2,
-          };
-
-    const srcObj = document.querySelector('video')!.srcObject as MediaStream;
-    if (srcObj) {
-      srcObj.getTracks().map((item) => item.stop());
+    // 4. video 要素へ反映。await の後なので要素が消えていないか再確認する
+    const video = document.querySelector('video') as HTMLVideoElement | null;
+    if (!video) {
+      // タブ離脱などで video 要素が無くなった場合はストリームを破棄
+      mediaStream.getTracks().forEach((track) => track.stop());
+      return;
     }
+    video.srcObject = mediaStream;
 
-    // カメラ起動
-    const mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        aspectRatio: aspect,
-        width: {
-          min: 480,
-          ideal: 1080,
-        },
-        height: {
-          min: 480,
-          ideal: 1080,
-        },
-        deviceId: targetDeviceId ? targetDeviceId : undefined,
-        facingMode: 'environment',
-        frameRate: { ideal: 30, max: 60 },
-      },
-    });
-
-    document.querySelector('video')!.srcObject = mediaStream;
-    console.log(`${document.querySelector('video')!.width}  ${document.querySelector('video')!.height}`);
-
-    const video = document.querySelector('video') as HTMLVideoElement;
+    // 5. 認識処理
     const canv = document.createElement('canvas');
     canv.width = 720;
     canv.height = 720;
     const context = canv.getContext('2d') as CanvasRenderingContext2D;
 
-    // 認識処理
     const id = window.setInterval(function () {
       context.drawImage(video, 0, 0, 720, 720);
 
@@ -160,10 +169,8 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
       if (code && code.binaryData.length > 0) {
         // 読み取れたら結果出力
         console.log(code);
-        if (code.binaryData.length > 0) {
-          stopRecogQR();
-          setQrData({ byte: code.binaryData, data: code.data, version: code.version });
-        }
+        stopRecogQR();
+        setQrData({ byte: code.binaryData, data: code.data, version: code.version });
       }
     }, 50);
     window.codeReaderTimer = id;
@@ -181,7 +188,7 @@ const App: React.SFC<PropsType> = (props: PropsType) => {
         <video id="qrReader" autoPlay playsInline={true} className="qr_reader" width={720} height={720}></video>
         <div style={{ position: 'absolute', bottom: 70, width: '90%', margin: '5%' }}>
           <Typography variant={'h6'}>カメラデバイス選択</Typography>
-          <Select defaultValue={renderDeviceId} onChange={changeDeviceId} style={{ width: '90%' }}>
+          <Select value={renderDeviceId} onChange={changeDeviceId} style={{ width: '90%' }} displayEmpty>
             {deviceList.map((item, index) => {
               return (
                 <MenuItem key={item.deviceId} value={item.deviceId}>
