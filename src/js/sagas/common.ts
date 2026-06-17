@@ -11,6 +11,10 @@ import { Color } from './Color';
 export const fetchJson = async <T>(url: string, headers: any = {}): Promise<T> => {
   try {
     const result = await fetch(url, { cache: 'no-store', headers: headers });
+    // fetch は 4xx/5xx でも reject しないため、明示的にステータスを確認する
+    if (!result.ok) {
+      throw new Error(`HTTP ${result.status} ${result.statusText}`);
+    }
     const config = await result.json();
     return config as T;
   } catch (e) {
@@ -30,6 +34,9 @@ export const postJson = async <T>(url: string, body: object, headers: any = {}):
       },
       body: JSON.stringify(body),
     });
+    if (!result.ok) {
+      throw new Error(`HTTP ${result.status} ${result.statusText}`);
+    }
     return (await result.json()) as T;
   } catch (e) {
     console.error(e);

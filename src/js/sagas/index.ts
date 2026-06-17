@@ -129,10 +129,14 @@ export function* postReception(action: ReturnType<typeof actions.callPostRecepti
       yield put(actions.updateAcceptedList(json.data));
       yield put(actions.updateStatus('ok'));
     } else {
+      // 登録失敗をオペレーターに通知する（従来は何も表示されず失敗に気付けなかった）
+      yield put(actions.changeNotify(true, 'error', '受付の登録に失敗しました。'));
       yield put(actions.updateStatus('error'));
     }
   } catch (e) {
+    // 通信エラー時もユーザーへ通知する
     console.error(e);
+    yield call(errorHandler, e);
   }
 }
 
@@ -142,6 +146,7 @@ export function* fetchVisitorList(action: ReturnType<typeof actions.fetchVisitor
     yield call(updateAccepted);
     yield put(actions.changeNotify(true, 'info', '更新完了'));
   } catch (e) {
-    errorHandler(e);
+    // yield を付け忘れると errorHandler が実行されない（ジェネレータが回らない）
+    yield call(errorHandler, e);
   }
 }

@@ -158,13 +158,19 @@ const App: React.FC<PropsType> = (props: PropsType) => {
     const canv = document.createElement('canvas');
     canv.width = 720;
     canv.height = 720;
-    const context = canv.getContext('2d') as CanvasRenderingContext2D;
+    // getImageData を毎フレーム呼ぶため willReadFrequently を有効化し、GPU→CPU の読み戻しを最適化する
+    const context = canv.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
 
     const id = window.setInterval(function () {
+      // 映像がまだ来ていないフレームは処理しない（空画像への無駄な jsQR 実行を避ける）
+      if (video.readyState < video.HAVE_CURRENT_DATA) {
+        return;
+      }
       context.drawImage(video, 0, 0, 720, 720);
 
       const imageData = context.getImageData(0, 0, 720, 720);
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      // QR は明地・暗コードが基本なので反転走査を行わない（既定の attemptBoth に対し約2倍高速）
+      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
       if (code && code.binaryData.length > 0) {
         // 読み取れたら結果出力
         console.log(code);
