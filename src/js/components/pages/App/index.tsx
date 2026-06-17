@@ -34,6 +34,23 @@ type ActionProps = typeof mapDispatchToProps;
 type PropsType = ComponentProps & ActionProps;
 const App: React.FC<PropsType> = (props: PropsType) => {
   const { classes } = useStyles();
+
+  // iOS の引っ張り(オーバースクロール/ラバーバンド)領域や Safari のツールバー色を
+  // テーマに合わせる。ラバーバンドの背景は html の background-color で決まるため、
+  // html/body にテーマの背景色を設定し、theme-color メタも更新する。
+  React.useEffect(() => {
+    const bg = props.theme.palette.background.default;
+    document.documentElement.style.backgroundColor = bg;
+    document.body.style.backgroundColor = bg;
+    let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+    }
+    meta.content = bg;
+  }, [props.theme]);
+
   const tabs = [
     {
       label: 'QRリーダー',
