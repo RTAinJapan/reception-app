@@ -10,7 +10,8 @@ const useStyles = makeStyles()({
     flexGrow: 1,
     position: 'sticky',
     bottom: 0,
-    backgroundColor: 'white',
+    // 背景色はハードコードせず、Paper のテーマ（MuiPaper 上書き）に追従させる。
+    // 以前は 'white' 固定で、ダークモード時に下部タブバーだけ白く残っていた。
     zIndex: 1000,
   },
   hidden: {
