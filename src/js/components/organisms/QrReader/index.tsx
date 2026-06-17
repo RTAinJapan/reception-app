@@ -300,11 +300,12 @@ const App: React.FC<PropsType> = (props: PropsType) => {
 
   const createQrReader = () => {
     return (
-      <div style={{ height: '100%' }}>
-        <video id="qrReader" autoPlay playsInline={true} className="qr_reader" width={720} height={720}></video>
-        <div style={{ position: 'absolute', bottom: 70, width: '90%', margin: '5%' }}>
+      // 縦 flex で「映像が残り高さにフィット ＋ 下にデバイス選択」を収め、縦スクロールを出さない
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+        <video id="qrReader" autoPlay playsInline={true} className="qr_reader"></video>
+        <div style={{ flexShrink: 0, paddingTop: 8 }}>
           <Typography variant={'h6'}>カメラデバイス選択</Typography>
-          <Select value={renderDeviceId} onChange={changeDeviceId} style={{ width: '90%' }} displayEmpty>
+          <Select fullWidth value={renderDeviceId} onChange={changeDeviceId} displayEmpty>
             {deviceList.map((item, index) => {
               return (
                 <MenuItem key={item.deviceId} value={item.deviceId}>
@@ -399,7 +400,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
     );
   };
 
-  return <div style={{ height: '100%', padding: 10 }}>{!qrData ? createQrReader() : createQrResult()}</div>;
+  return <div style={{ height: '100%', padding: 10, boxSizing: 'border-box' }}>{!qrData ? createQrReader() : createQrResult()}</div>;
 };
 
 // state
