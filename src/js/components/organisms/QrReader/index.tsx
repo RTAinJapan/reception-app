@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from 'tss-react/mui';
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
 import jsQR from 'jsqr';
@@ -10,20 +10,19 @@ import { stopRecogQR } from '../../../common/util';
 import { Visitor } from '../../../types/global';
 import { converDate as convertDate } from '../../../sagas/common';
 
-const useStyles = () =>
-  makeStyles({
-    root: {
-      display: 'flex',
-      position: 'relative',
-    },
-  })();
+const useStyles = makeStyles()({
+  root: {
+    display: 'flex',
+    position: 'relative',
+  },
+});
 
 type ComponentProps = ReturnType<typeof mapStateToProps>;
 type ActionProps = typeof mapDispatchToProps;
 
 type PropsType = ComponentProps & ActionProps;
-const App: React.SFC<PropsType> = (props: PropsType) => {
-  const classes = useStyles();
+const App: React.FC<PropsType> = (props: PropsType) => {
+  const { classes } = useStyles();
 
   const [deviceList, setDeviceList] = React.useState<MediaDeviceInfo[]>([]);
   const [renderDeviceId, setDeviceId] = React.useState(props.readerDeviceId);

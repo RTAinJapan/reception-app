@@ -11,30 +11,29 @@ import { Button, Paper, Theme, ThemeProvider } from '@mui/material';
 import { RootState } from '../../../reducers';
 import { connect } from 'react-redux';
 import customTheme from '../../../theme';
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from 'tss-react/mui';
 import SnackBar from '../../molecules/SnackBar';
 import Dialog from '../../organisms/Dialog';
 import Modal from '../../molecules/Modal';
 
-const useStyles = (theme: Theme) =>
-  makeStyles({
-    root: {
-      justifyContent: 'center',
-      display: 'initial',
-      width: '100%',
-      height: '100%',
-    },
-    login: {
-      padding: 10,
-    },
-  })();
+const useStyles = makeStyles()({
+  root: {
+    justifyContent: 'center',
+    display: 'initial',
+    width: '100%',
+    height: '100%',
+  },
+  login: {
+    padding: 10,
+  },
+});
 
 type ComponentProps = ReturnType<typeof mapStateToProps>;
 type ActionProps = typeof mapDispatchToProps;
 
 type PropsType = ComponentProps & ActionProps;
 const App: React.FC<PropsType> = (props: PropsType) => {
-  const classes = useStyles(props.theme);
+  const { classes } = useStyles();
   const tabs = [
     {
       label: 'QRリーダー',

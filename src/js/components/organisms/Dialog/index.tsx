@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from 'tss-react/mui';
 import * as actions from '../../../actions';
 import Modal from '../../molecules/Modal';
 import { RootState } from '../../../reducers';
@@ -10,35 +10,34 @@ import classNames from 'classnames';
 import { Theme, ThemeProvider } from '@mui/material';
 import { compColor } from '../../../sagas/common';
 
-const useStyles = (theme: Theme) =>
-  makeStyles({
-    root: {
-      width: '80vw',
-      padding: 10,
-      borderRadius: 5,
-      maxWidth: 600,
-    },
-    contents: {},
-    info: {
-      backgroundColor: theme.palette.background.paper,
-      color: theme.palette.text.primary,
-    },
-    warning: {
-      backgroundColor: 'orange',
-      color: 'black',
-    },
-    error: {
-      backgroundColor: '#ff4444',
-      color: 'black',
-    },
-    control: {
-      marginTop: 10,
-      float: 'right',
-    },
-    button: {
-      margin: 5,
-    },
-  })();
+const useStyles = makeStyles()((theme) => ({
+  root: {
+    width: '80vw',
+    padding: 10,
+    borderRadius: 5,
+    maxWidth: 600,
+  },
+  contents: {},
+  info: {
+    backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
+  },
+  warning: {
+    backgroundColor: 'orange',
+    color: 'black',
+  },
+  error: {
+    backgroundColor: '#ff4444',
+    color: 'black',
+  },
+  control: {
+    marginTop: 10,
+    float: 'right',
+  },
+  button: {
+    margin: 5,
+  },
+}));
 
 const theme: Partial<Theme> = {
   components: {
@@ -56,8 +55,8 @@ type ComponentProps = ReturnType<typeof mapStateToProps>;
 type ActionProps = typeof mapDispatchToProps;
 
 type PropsType = ComponentProps & ActionProps;
-const App: React.SFC<PropsType> = (props: PropsType) => {
-  const classes = useStyles(props.theme);
+const App: React.FC<PropsType> = (props: PropsType) => {
+  const { classes } = useStyles();
 
   const label = {
     ok: 'OK',

@@ -1,36 +1,35 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from 'tss-react/mui';
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
 import { FormControl, FormControlLabel, Radio, RadioGroup, Typography } from '@mui/material';
 import customTheme from '../../../theme';
 
-const useStyles = () =>
-  makeStyles({
-    root: {
-      width: '100%',
-      padding: 10,
-    },
-    content: {
-      marginBottom: 10,
-    },
-    controlButton: {
-      margin: 5,
-      padding: 2,
-      border: 'solid 1px',
-      borderRadius: '5px',
-      width: 150,
-      borderColor: 'black',
-    },
-  })();
+const useStyles = makeStyles()({
+  root: {
+    width: '100%',
+    padding: 10,
+  },
+  content: {
+    marginBottom: 10,
+  },
+  controlButton: {
+    margin: 5,
+    padding: 2,
+    border: 'solid 1px',
+    borderRadius: '5px',
+    width: 150,
+    borderColor: 'black',
+  },
+});
 
 type ComponentProps = ReturnType<typeof mapStateToProps>;
 type ActionProps = typeof mapDispatchToProps;
 
 type PropsType = ComponentProps & ActionProps;
-const App: React.SFC<PropsType> = (props: PropsType) => {
-  const classes = useStyles();
+const App: React.FC<PropsType> = (props: PropsType) => {
+  const { classes } = useStyles();
 
   const lightTheme = customTheme('light');
   const darkTheme = customTheme('dark');

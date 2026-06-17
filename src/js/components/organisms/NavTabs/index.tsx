@@ -1,11 +1,11 @@
 import React from 'react';
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from 'tss-react/mui';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Paper from '@mui/material/Paper';
 import { stopRecogQR } from '../../../common/util';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
   root: {
     flexGrow: 1,
     position: 'sticky',
@@ -29,8 +29,8 @@ type ComponentProps = {
   }[];
 };
 
-const NavTabs: React.SFC<ComponentProps & React.Props<any>> = (props) => {
-  const classes = useStyles();
+const NavTabs: React.FC<React.PropsWithChildren<ComponentProps>> = (props) => {
+  const { classes } = useStyles();
   const [tabIndex, setTabIndex] = React.useState(1);
 
   const handleChange = (event: React.ChangeEvent, newValue: any) => {

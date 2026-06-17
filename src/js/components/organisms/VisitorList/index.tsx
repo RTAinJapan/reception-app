@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from 'tss-react/mui';
 import CheckIcon from '@mui/icons-material/Check';
 import { Button, CircularProgress, Fab, MenuItem, Paper, Select, SelectChangeEvent, Typography, Theme } from '@mui/material';
 import * as actions from '../../../actions';
@@ -10,25 +10,24 @@ import { converDate } from '../../../sagas/common';
 import Modal from '../../molecules/Modal';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-const useStyles = () =>
-  makeStyles({
-    root: {
-      display: 'flex',
-      position: 'relative',
-    },
-    reloadButton: {
-      position: 'absolute !important' as any,
-      bottom: '6em',
-      right: '1em',
-    },
-  })();
+const useStyles = makeStyles()({
+  root: {
+    display: 'flex',
+    position: 'relative',
+  },
+  reloadButton: {
+    position: 'absolute !important' as any,
+    bottom: '6em',
+    right: '1em',
+  },
+});
 
 type ComponentProps = ReturnType<typeof mapStateToProps>;
 type ActionProps = typeof mapDispatchToProps;
 
 type PropsType = ComponentProps & ActionProps;
-const App: React.SFC<PropsType> = (props: PropsType) => {
-  const classes = useStyles();
+const App: React.FC<PropsType> = (props: PropsType) => {
+  const { classes } = useStyles();
   // 表示対象の入場者
   const [dispVisitorList, setDispVisitorList] = React.useState<Visitor[]>([]);
   // 入場受付済み

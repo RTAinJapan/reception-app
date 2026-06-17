@@ -1,8 +1,8 @@
 import React from 'react';
 import MuiModal from '@mui/material/Modal';
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
   paper: {
     position: 'absolute',
     backgroundColor: 'initial',
@@ -28,8 +28,8 @@ type ActionProps = {
 
 type PropsType = ComponentProps & ActionProps;
 
-const Modal: React.SFC<PropsType> = (props) => {
-  const classes = useStyles();
+const Modal: React.FC<PropsType> = (props) => {
+  const { classes } = useStyles();
   const handleClose = () => {
     if (props.modalClose) props.modalClose();
   };

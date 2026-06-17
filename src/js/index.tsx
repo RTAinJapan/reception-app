@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import './index.css';
 import App from './components/pages/App';
@@ -7,12 +7,14 @@ import configureStore from './store';
 import * as serviceWorker from './serviceWorker';
 import { SWUpdateDialog } from './components/organisms/SWUpdateDialog';
 
-ReactDOM.render(
-  <Provider store={configureStore()}>
-    <App />
-  </Provider>,
-  document.getElementById('root'),
-);
+const container = document.getElementById('root');
+if (container) {
+  createRoot(container).render(
+    <Provider store={configureStore()}>
+      <App />
+    </Provider>,
+  );
+}
 
 if (import.meta.hot) {
   import.meta.hot.accept();
@@ -24,7 +26,10 @@ serviceWorker.register({
   },
   onUpdate: (registration) => {
     if (registration.waiting) {
-      ReactDOM.render(<SWUpdateDialog registration={registration} />, document.querySelector('.SW-update-dialog'));
+      const swContainer = document.querySelector('.SW-update-dialog');
+      if (swContainer) {
+        createRoot(swContainer).render(<SWUpdateDialog registration={registration} />);
+      }
     }
   },
 });
