@@ -2,7 +2,7 @@
   font-family: 'NotoSansCJKjp';
   font-style: normal;
   font-weight: 400;
-  src: url('./font/NotoSansJP-Regular2.woff') format('woff');
+  src: url('/font/NotoSansJP-Regular2.woff') format('woff');
   font-display: swap;
 }
 
@@ -10,7 +10,7 @@
   font-family: 'NotoSansCJKjp';
   font-style: normal;
   font-weight: 700;
-  src: url('./font/NotoSansJP-Bold.otf2.woff') format('woff');
+  src: url('/font/NotoSansJP-Bold.otf2.woff') format('woff');
   font-display: swap;
 }
 

@@ -14,8 +14,8 @@ ReactDOM.render(
   document.getElementById('root'),
 );
 
-if ((module as any).hot) {
-  (module as any).hot.accept();
+if (import.meta.hot) {
+  import.meta.hot.accept();
 }
 
 serviceWorker.register({
