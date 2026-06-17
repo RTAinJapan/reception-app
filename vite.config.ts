@@ -44,6 +44,10 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,json,woff,woff2,otf,wasm}'],
+        // SPA 用のナビゲーションフォールバック(未知の遷移を index.html に向ける)が
+        // /login/ 配下まで巻き取ると、Discord 認証後の /login/discord が
+        // メインアプリに化けて認証キーがセットされない。/login/ は対象外にする。
+        navigateFallbackDenylist: [/\/login\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/imgur\.com\/.*/,
