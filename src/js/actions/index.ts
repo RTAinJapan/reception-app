@@ -75,6 +75,24 @@ export const updateAcceptedList = createAction(UPDATE_ACCEPTED_LIST, (action) =>
   return (list: Accepted[]) => action(list);
 });
 
+const ENQUEUE_PENDING_ACCEPT = 'ENQUEUE_PENDING_ACCEPT';
+/** オフライン時に受付を保留キューへ積む（楽観的にローカルの入場済みへも反映する） */
+export const enqueuePendingAccept = createAction(ENQUEUE_PENDING_ACCEPT, (action) => {
+  return (item: Accepted) => action(item);
+});
+
+const SET_PENDING_ACCEPTS = 'SET_PENDING_ACCEPTS';
+/** 保留キューを置き換える（再送後の残件反映に使用） */
+export const setPendingAccepts = createAction(SET_PENDING_ACCEPTS, (action) => {
+  return (list: Accepted[]) => action(list);
+});
+
+const FLUSH_PENDING_ACCEPTS = 'FLUSH_PENDING_ACCEPTS';
+/** 保留キューの再送を試みる（疎通回復時・手動更新時など） */
+export const flushPendingAccepts = createAction(FLUSH_PENDING_ACCEPTS, (action) => {
+  return () => action();
+});
+
 // Discord
 const LOGIN_DISCORD = 'LOGIN_DISCORD';
 /** ログインする */

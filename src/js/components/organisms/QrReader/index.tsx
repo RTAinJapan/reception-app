@@ -17,6 +17,11 @@ const useStyles = makeStyles()({
   },
 });
 
+// ネイティブ BarcodeDetector API の最小型定義（標準 lib に未収録のため）
+type DetectedBarcode = { rawValue: string };
+type BarcodeDetectorInstance = { detect: (source: CanvasImageSource) => Promise<DetectedBarcode[]> };
+type BarcodeDetectorConstructor = new (options?: { formats?: string[] }) => BarcodeDetectorInstance;
+
 type ComponentProps = ReturnType<typeof mapStateToProps>;
 type ActionProps = typeof mapDispatchToProps;
 
@@ -155,27 +160,75 @@ const App: React.FC<PropsType> = (props: PropsType) => {
     video.srcObject = mediaStream;
 
     // 5. 認識処理
+    // ネイティブ BarcodeDetector が使える環境（Android Chrome 等）では、
+    // 反射・スマホ画面のモアレ・印刷物などに強い純正エンジンを優先利用する。
+    // 非対応環境（iOS Safari 等）は従来どおり jsQR にフォールバックする。
+    const BarcodeDetectorCtor = (window as unknown as { BarcodeDetector?: BarcodeDetectorConstructor }).BarcodeDetector;
+    let detector: BarcodeDetectorInstance | null = null;
+    if (BarcodeDetectorCtor) {
+      try {
+        detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
+      } catch (e) {
+        detector = null;
+      }
+    }
+    let useDetector = detector !== null;
+
     const canv = document.createElement('canvas');
-    canv.width = 720;
-    canv.height = 720;
     // getImageData を毎フレーム呼ぶため willReadFrequently を有効化し、GPU→CPU の読み戻しを最適化する
     const context = canv.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
 
-    const id = window.setInterval(function () {
-      // 映像がまだ来ていないフレームは処理しない（空画像への無駄な jsQR 実行を避ける）
-      if (video.readyState < video.HAVE_CURRENT_DATA) {
-        return;
-      }
-      context.drawImage(video, 0, 0, 720, 720);
+    const handleDetected = (text: string, bytes: number[] = [], version = 0) => {
+      // 既に停止済み（stopRecogQR で 0 になる）なら無視し、二重反映を防ぐ
+      if (window.codeReaderTimer !== id) return;
+      console.log('QR detected', text);
+      stopRecogQR();
+      setQrData({ byte: bytes, data: text, version });
+    };
 
-      const imageData = context.getImageData(0, 0, 720, 720);
-      // QR は明地・暗コードが基本なので反転走査を行わない（既定の attemptBoth に対し約2倍高速）
-      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-      if (code && code.binaryData.length > 0) {
-        // 読み取れたら結果出力
-        console.log(code);
-        stopRecogQR();
-        setQrData({ byte: code.binaryData, data: code.data, version: code.version });
+    let inFlight = false;
+    const id = window.setInterval(async function () {
+      // 前フレームの解析（BarcodeDetector は非同期）が終わっていなければスキップ
+      if (inFlight) return;
+      // 映像がまだ来ていないフレームは処理しない
+      if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) return;
+      inFlight = true;
+      try {
+        if (useDetector && detector) {
+          try {
+            const results = await detector.detect(video);
+            if (results && results.length > 0 && results[0].rawValue) {
+              handleDetected(results[0].rawValue);
+            }
+            return;
+          } catch (e) {
+            // ネイティブ検出が機能しない環境では以降 jsQR に切り替える
+            console.warn('BarcodeDetector が利用できないため jsQR に切り替えます', e);
+            useDetector = false;
+          }
+        }
+
+        // jsQR フォールバック。
+        // アスペクト比を保ったまま実解像度に近い解像度で取り込み、正方形へ押し込む歪みを排除する。
+        // 印刷物や小さい/高密度の QR の細部を保ちつつ、コストは長辺 1024px で上限を設ける。
+        const maxSide = 1024;
+        const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
+        const cw = Math.max(1, Math.round(video.videoWidth * scale));
+        const ch = Math.max(1, Math.round(video.videoHeight * scale));
+        if (canv.width !== cw || canv.height !== ch) {
+          canv.width = cw;
+          canv.height = ch;
+        }
+        context.drawImage(video, 0, 0, cw, ch);
+        const imageData = context.getImageData(0, 0, cw, ch);
+        // 反転走査は行わない（通常 QR は明地・暗コード）。走査が速くなる分、反射でちらつく状況でも
+        // 単位時間あたりの試行回数が増え、結果的に読み取り成功率が上がる。
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+        if (code && code.binaryData.length > 0) {
+          handleDetected(code.data, code.binaryData, code.version);
+        }
+      } finally {
+        inFlight = false;
       }
     }, 50);
     window.codeReaderTimer = id;
