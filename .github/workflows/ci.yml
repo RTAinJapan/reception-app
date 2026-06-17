@@ -59,3 +59,28 @@ jobs:
           path: build
           if-no-files-found: error
           retention-days: 14
+
+  smoke:
+    name: Smoke (startup crash detection)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: yarn build
+
+      - name: Smoke test (起動時クラッシュ検出)
+        run: yarn smoke

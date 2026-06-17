@@ -22,6 +22,10 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     open: true,
   },
+  // preview はスモークテストやCIで使うため自動でブラウザを開かない
+  preview: {
+    open: false,
+  },
   define: {
     // src/js/serviceWorker.ts が参照する webpack 由来の環境変数を Vite でも解決できるようにする
     'process.env.NODE_ENV': JSON.stringify(mode),
