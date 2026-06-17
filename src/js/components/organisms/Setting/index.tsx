@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
-import { Button, FormControl, FormControlLabel, Radio, RadioGroup, Typography } from '@mui/material';
+import { Button, FormControl, FormControlLabel, Radio, RadioGroup, Switch, Typography } from '@mui/material';
 import customTheme from '../../../theme';
 
 const useStyles = makeStyles()({
@@ -58,6 +58,18 @@ const App: React.FC<PropsType> = (props: PropsType) => {
         </FormControl>
       </div>
 
+      {/* QR読み取りの軽量モード（低スペック端末向け） */}
+      <div className={classes.content}>
+        <Typography variant="h6">QR読み取り</Typography>
+        <FormControlLabel
+          control={<Switch checked={props.lowSpecMode} onChange={(_event, checked) => props.updateLowSpecMode(checked)} />}
+          label="軽量モード（動作が重い端末向け）"
+        />
+        <Typography variant="caption" display="block">
+          解像度と走査頻度を下げて負荷を減らします。読み取りにくくなった場合や端末が熱くなる・カクつく場合に ON にしてください。
+        </Typography>
+      </div>
+
       {/* 未送信（保留中）の受付。通信不能時に蓄積され、回復時に自動再送される */}
       {props.pendingAccepts.length > 0 && (
         <div className={classes.content}>
@@ -77,6 +89,7 @@ const mapStateToProps = (state: RootState) => {
   return {
     theme: state.content.theme,
     pendingAccepts: state.content.pendingAccepts,
+    lowSpecMode: state.content.displaySetting.lowSpecMode,
   };
 };
 
@@ -85,6 +98,7 @@ const mapDispatchToProps = {
   updateTheme: actions.updateTheme,
   changeNotify: actions.changeNotify,
   flushPendingAccepts: actions.flushPendingAccepts,
+  updateLowSpecMode: actions.updateLowSpecMode,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);

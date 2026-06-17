@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => ({
       registerType: 'prompt',
       workbox: {
         maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,json,woff,woff2,otf}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,json,woff,woff2,otf,wasm}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/imgur\.com\/.*/,

@@ -4,11 +4,34 @@ import { makeStyles } from 'tss-react/mui';
 import * as actions from '../../../actions';
 import { RootState } from '../../../reducers';
 import jsQR from 'jsqr';
+import { readBarcodes, prepareZXingModule } from 'zxing-wasm/reader';
+import zxingWasmUrl from 'zxing-wasm/reader/zxing_reader.wasm?url';
 import { QRCodeRenderersOptions } from 'qrcode';
 import { Button, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
 import { stopRecogQR } from '../../../common/util';
 import { Visitor } from '../../../types/global';
 import { converDate as convertDate } from '../../../sagas/common';
+
+// zxing-wasm の wasm をローカル（バンドル）から読み込む。
+// CDN 依存をなくし、オフライン（PWA プリキャッシュ）でも動作させるため。
+prepareZXingModule({
+  overrides: {
+    locateFile: (path: string, prefix: string) => (path.endsWith('.wasm') ? zxingWasmUrl : prefix + path),
+  },
+});
+
+// zxing-wasm の読み取りオプション。
+// 既定では tryHarder/tryRotate/tryInvert/tryDownscale が全て true で重いため、
+// スタッフ私物の低スペック端末も考慮してこれらを無効化する。
+// 反射・照明ムラに効く LocalAverage（HybridBinarizer）は既定のまま活かす。
+const ZXING_OPTIONS = {
+  formats: ['QRCode'] as const,
+  tryHarder: false,
+  tryRotate: false,
+  tryInvert: false,
+  tryDownscale: false,
+  maxNumberOfSymbols: 1,
+};
 
 const useStyles = makeStyles()({
   root: {
@@ -159,10 +182,23 @@ const App: React.FC<PropsType> = (props: PropsType) => {
     }
     video.srcObject = mediaStream;
 
-    // 5. 認識処理
-    // ネイティブ BarcodeDetector が使える環境（Android Chrome 等）では、
-    // 反射・スマホ画面のモアレ・印刷物などに強い純正エンジンを優先利用する。
-    // 非対応環境（iOS Safari 等）は従来どおり jsQR にフォールバックする。
+    // 連続オートフォーカスを best-effort で要求する（対応端末＝主に Android のみ。
+    // iOS はもともと自動。advanced 制約は非対応なら無視されるが念のため try/catch）。
+    try {
+      const track = mediaStream.getVideoTracks()[0];
+      if (track && typeof track.applyConstraints === 'function') {
+        await track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet] });
+      }
+    } catch (e) {
+      // 非対応端末では無視する
+    }
+
+    // 5. 認識処理（デコーダの優先順位）
+    //   native  : ネイティブ BarcodeDetector（Android Chrome 等。最速・最堅牢）
+    //   zxing   : zxing-wasm（iOS Safari 等。LocalAverage 二値化で反射・照明ムラに強い）
+    //   jsqr    : 最終フォールバック（wasm 読込に失敗した場合の保険）
+    // いずれも非同期 ＋ inFlight ガードで多重実行を抑止し、遅い端末では自然に
+    // 走査頻度が落ちるだけで詰まらない（自動スロットリング）。
     const BarcodeDetectorCtor = (window as unknown as { BarcodeDetector?: BarcodeDetectorConstructor }).BarcodeDetector;
     let detector: BarcodeDetectorInstance | null = null;
     if (BarcodeDetectorCtor) {
@@ -172,7 +208,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
         detector = null;
       }
     }
-    let useDetector = detector !== null;
+    let decodeMode: 'native' | 'zxing' | 'jsqr' = detector ? 'native' : 'zxing';
 
     const canv = document.createElement('canvas');
     // getImageData を毎フレーム呼ぶため willReadFrequently を有効化し、GPU→CPU の読み戻しを最適化する
@@ -186,15 +222,20 @@ const App: React.FC<PropsType> = (props: PropsType) => {
       setQrData({ byte: bytes, data: text, version });
     };
 
+    // 低スペック端末向け軽量モードでは、取り込み解像度と走査頻度を下げて負荷を抑える
+    const maxSide = props.lowSpecMode ? 640 : 1024;
+    const intervalMs = props.lowSpecMode ? 150 : 50;
+
     let inFlight = false;
     const id = window.setInterval(async function () {
-      // 前フレームの解析（BarcodeDetector は非同期）が終わっていなければスキップ
+      // 前フレームの解析（非同期）が終わっていなければスキップ
       if (inFlight) return;
       // 映像がまだ来ていないフレームは処理しない
       if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) return;
       inFlight = true;
       try {
-        if (useDetector && detector) {
+        // --- ネイティブ BarcodeDetector ---
+        if (decodeMode === 'native' && detector) {
           try {
             const results = await detector.detect(video);
             if (results && results.length > 0 && results[0].rawValue) {
@@ -202,16 +243,16 @@ const App: React.FC<PropsType> = (props: PropsType) => {
             }
             return;
           } catch (e) {
-            // ネイティブ検出が機能しない環境では以降 jsQR に切り替える
-            console.warn('BarcodeDetector が利用できないため jsQR に切り替えます', e);
-            useDetector = false;
+            console.warn('BarcodeDetector が利用できないため zxing-wasm に切り替えます', e);
+            decodeMode = 'zxing';
+            // この先で zxing にフォールバック（同フレーム内で続行）
           }
         }
 
-        // jsQR フォールバック。
-        // アスペクト比を保ったまま実解像度に近い解像度で取り込み、正方形へ押し込む歪みを排除する。
-        // 印刷物や小さい/高密度の QR の細部を保ちつつ、コストは長辺 1024px で上限を設ける。
-        const maxSide = 1024;
+        // --- 画像取り込み（zxing / jsQR 共通）---
+        // アスペクト比を保ったまま取り込み、正方形へ押し込む歪みを排除する。
+        // 印刷物や小さい/高密度の QR の細部を保ちつつ、コストは長辺で上限を設ける
+        // （軽量モード時は解像度を下げて負荷を抑える）。
         const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
         const cw = Math.max(1, Math.round(video.videoWidth * scale));
         const ch = Math.max(1, Math.round(video.videoHeight * scale));
@@ -221,7 +262,24 @@ const App: React.FC<PropsType> = (props: PropsType) => {
         }
         context.drawImage(video, 0, 0, cw, ch);
         const imageData = context.getImageData(0, 0, cw, ch);
-        // 反転走査は行わない（通常 QR は明地・暗コード）。走査が速くなる分、反射でちらつく状況でも
+
+        // --- zxing-wasm（反射・照明ムラに強い）---
+        if (decodeMode === 'zxing') {
+          try {
+            const results = await readBarcodes(imageData, ZXING_OPTIONS);
+            if (results && results.length > 0 && results[0].text) {
+              handleDetected(results[0].text);
+            }
+            return;
+          } catch (e) {
+            console.warn('zxing-wasm が利用できないため jsQR に切り替えます', e);
+            decodeMode = 'jsqr';
+            // 同フレーム内で jsQR にフォールバック
+          }
+        }
+
+        // --- jsQR（最終フォールバック）---
+        // 反転走査は行わない（通常 QR は明地・暗コード）。走査が速い分、反射でちらつく状況でも
         // 単位時間あたりの試行回数が増え、結果的に読み取り成功率が上がる。
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
         if (code && code.binaryData.length > 0) {
@@ -230,7 +288,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
       } finally {
         inFlight = false;
       }
-    }, 50);
+    }, intervalMs);
     window.codeReaderTimer = id;
   };
 
@@ -348,6 +406,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
 const mapStateToProps = (state: RootState) => {
   return {
     readerDeviceId: state.content.displaySetting.readerDeviceId,
+    lowSpecMode: state.content.displaySetting.lowSpecMode,
     visitorList: state.content.visitorList,
     acceptedList: state.content.acceptedList,
     acceptedIdentifier: state.content.acceptedIdentifierList,

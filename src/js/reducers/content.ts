@@ -54,6 +54,8 @@ export type ContentState = {
 
   displaySetting: {
     readerDeviceId: string;
+    /** 低スペック端末向けの軽量モード（解像度・走査頻度を下げる） */
+    lowSpecMode: boolean;
   };
 };
 
@@ -94,6 +96,7 @@ export const initial: ContentState = {
   },
   displaySetting: {
     readerDeviceId: '',
+    lowSpecMode: false,
   },
 };
 
@@ -157,6 +160,16 @@ const reducer = (state: ContentState = initial, action: Action): ContentState =>
         displaySetting: {
           ...state.displaySetting,
           readerDeviceId: action.payload,
+        },
+      };
+    }
+
+    case getType(actions.updateLowSpecMode): {
+      return {
+        ...state,
+        displaySetting: {
+          ...state.displaySetting,
+          lowSpecMode: action.payload,
         },
       };
     }

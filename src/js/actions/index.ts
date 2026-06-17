@@ -55,6 +55,13 @@ export const updateReaderDevice = createAction(UPDATE_READER_DEVICE, (action) =>
   return (deviceId: string) => action(deviceId);
 });
 
+// 低スペック端末向けの軽量モード
+const UPDATE_LOW_SPEC_MODE = 'UPDATE_LOW_SPEC_MODE';
+/** 軽量モードの ON/OFF を切り替える */
+export const updateLowSpecMode = createAction(UPDATE_LOW_SPEC_MODE, (action) => {
+  return (enabled: boolean) => action(enabled);
+});
+
 const FETCH_VISITOR_LIST = 'FETCH_VISITOR_LIST';
 export const fetchVisitorList = createAction(FETCH_VISITOR_LIST, (action) => {
   return () => action();
