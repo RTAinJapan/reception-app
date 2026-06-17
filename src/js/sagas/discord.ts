@@ -96,6 +96,8 @@ export function* loginCheck() {
     if (!config.discord.enable) {
       console.warn('認証スキップ');
       yield put(actions.storeDiscordUserName('テストユーザ'));
+      // 画面表示ゲート(status !== 'initialize')を満たすため、ここで status を確定させる
+      yield put(actions.updateStatus('ok'));
       return;
     } else {
       console.log('認証開始');
