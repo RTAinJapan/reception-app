@@ -32,8 +32,10 @@ export type ContentState = {
 
   /** 全入場者リスト */
   visitorList: Visitor[];
-  /** 入場済み */
+  /** 入場済み（サーバ確定分 ＋ 未送信の保留分を含む表示用の集合） */
   acceptedList: Accepted[];
+  /** 通信不能で未送信の受付。疎通回復時に再送する（localStorageに永続化される） */
+  pendingAccepts: Accepted[];
   /** 人間単位で入場した人たち */
   acceptedIdentifierList: string[];
   theme: {
@@ -52,6 +54,8 @@ export type ContentState = {
 
   displaySetting: {
     readerDeviceId: string;
+    /** 低スペック端末向けの軽量モード（解像度・走査頻度を下げる） */
+    lowSpecMode: boolean;
   };
 };
 
@@ -77,6 +81,7 @@ export const initial: ContentState = {
   },
   visitorList: [],
   acceptedList: [],
+  pendingAccepts: [],
   acceptedIdentifierList: [],
   theme: {
     mode: 'light',
@@ -91,7 +96,33 @@ export const initial: ContentState = {
   },
   displaySetting: {
     readerDeviceId: '',
+    lowSpecMode: false,
   },
+};
+
+/** code をキーに重複を排除する（先に現れたものを優先＝サーバ確定分を優先） */
+const dedupeByCode = (list: Accepted[]): Accepted[] => {
+  const seen = new Set<string>();
+  const result: Accepted[] = [];
+  for (const item of list) {
+    if (!seen.has(item.code)) {
+      seen.add(item.code);
+      result.push(item);
+    }
+  }
+  return result;
+};
+
+/** 入場済みコードから、入場経験のある identifier 一覧を算出する */
+const computeAcceptedIdentifiers = (visitorList: Visitor[], acceptedList: Accepted[]): string[] => {
+  const acceptedCodes = acceptedList.map((item) => item.code);
+  const list: string[] = [];
+  for (const visitor of visitorList) {
+    if (acceptedCodes.includes(visitor.code) && !list.includes(visitor.identifier)) {
+      list.push(visitor.identifier);
+    }
+  }
+  return list;
 };
 
 const reducer = (state: ContentState = initial, action: Action): ContentState => {
@@ -133,6 +164,16 @@ const reducer = (state: ContentState = initial, action: Action): ContentState =>
       };
     }
 
+    case getType(actions.updateLowSpecMode): {
+      return {
+        ...state,
+        displaySetting: {
+          ...state.displaySetting,
+          lowSpecMode: action.payload,
+        },
+      };
+    }
+
     case getType(actions.updateVisitorList): {
       return {
         ...state,
@@ -141,18 +182,31 @@ const reducer = (state: ContentState = initial, action: Action): ContentState =>
     }
 
     case getType(actions.updateAcceptedList): {
-      const list: string[] = [];
-      const acceptedList = action.payload.map((item) => item.code);
-      for (const visitor of state.visitorList) {
-        if (acceptedList.includes(visitor.code) && !list.includes(visitor.identifier)) {
-          list.push(visitor.identifier);
-        }
-      }
-
+      // サーバの最新スナップショットに、未送信の保留分を重ねて表示用集合とする
+      const merged = dedupeByCode([...action.payload, ...state.pendingAccepts]);
       return {
         ...state,
-        acceptedList: action.payload,
-        acceptedIdentifierList: list,
+        acceptedList: merged,
+        acceptedIdentifierList: computeAcceptedIdentifiers(state.visitorList, merged),
+      };
+    }
+
+    case getType(actions.enqueuePendingAccept): {
+      // 保留キューへ積みつつ、ローカルでは即「入場済み」として扱う（オフライン継続）
+      const pendingAccepts = dedupeByCode([...state.pendingAccepts, action.payload]);
+      const acceptedList = dedupeByCode([...state.acceptedList, action.payload]);
+      return {
+        ...state,
+        pendingAccepts,
+        acceptedList,
+        acceptedIdentifierList: computeAcceptedIdentifiers(state.visitorList, acceptedList),
+      };
+    }
+
+    case getType(actions.setPendingAccepts): {
+      return {
+        ...state,
+        pendingAccepts: action.payload,
       };
     }
 

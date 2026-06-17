@@ -56,6 +56,8 @@ export const stopRecogQR = () => {
   try {
     console.log(`stopRecogQR id=${window.codeReaderTimer}`);
     clearInterval(window.codeReaderTimer);
+    // 非同期走査(BarcodeDetector)が停止後に結果を反映しないよう、停止を識別できる値にする
+    window.codeReaderTimer = 0;
     const dom = (document.querySelector('video')!.srcObject as MediaStream).getVideoTracks()[0].stop();
   } catch (e) {
     // ビデオがまだ無いときとかにここに来るが、気にしない

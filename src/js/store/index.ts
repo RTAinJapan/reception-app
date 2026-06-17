@@ -23,20 +23,11 @@ export default function configureStore() {
       }
     : {};
 
-  const store = createStore(reducer, persistedState, composeEnhancers(applyMiddleware(sagaMiddleware)));
+  const store = createStore(reducer, persistedState as any, composeEnhancers(applyMiddleware(sagaMiddleware)));
   // 変更があったときに保存する
   store.subscribe(() => {
     localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(store.getState().content));
   });
-
-  if ((module as any).hot) {
-    // Enable Webpack hot module replacement for reducers
-    (module as any).hot.accept('../reducers', () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const nextRootReducer = require('../reducers/index');
-      store.replaceReducer(nextRootReducer);
-    });
-  }
 
   sagaMiddleware.run(rootSaga);
   return store;

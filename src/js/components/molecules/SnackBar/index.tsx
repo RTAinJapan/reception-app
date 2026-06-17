@@ -4,17 +4,14 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import InfoIcon from '@mui/icons-material/Info';
 import CloseIcon from '@mui/icons-material/Close';
-import green from '@mui/material/colors/green';
-import amber from '@mui/material/colors/amber';
 import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
 import SnackbarContent from '@mui/material/SnackbarContent';
 import WarningIcon from '@mui/icons-material/Warning';
-import { Theme } from '@mui/material/styles';
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from 'tss-react/mui';
 import { connect } from 'react-redux';
 import { RootState } from '../../../reducers';
-import { blue, red } from '@mui/material/colors';
+import { green, amber, blue, red } from '@mui/material/colors';
 import customTheme from '../../../theme';
 
 const variantIcon = {
@@ -24,27 +21,26 @@ const variantIcon = {
   info: InfoIcon,
 };
 
-const innerStyle = (theme: Theme) =>
-  makeStyles({
-    snackbarMessage: {
-      width: 'calc(100% - 60px)',
-    },
-    snackbarAction: {
-      paddingLeft: 3,
-    },
-    icon: {
-      fontSize: 20,
-    },
-    iconVariant: {
-      opacity: 0.9,
-      marginRight: theme.spacing(1),
-    },
-    message: {
-      display: 'flex',
-      alignItems: 'center',
-    },
-    close: {},
-  })();
+const useStyles = makeStyles()((theme) => ({
+  snackbarMessage: {
+    width: 'calc(100% - 60px)',
+  },
+  snackbarAction: {
+    paddingLeft: 3,
+  },
+  icon: {
+    fontSize: 20,
+  },
+  iconVariant: {
+    opacity: 0.9,
+    marginRight: theme.spacing(1),
+  },
+  message: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  close: {},
+}));
 
 const snackbarBackground = {
   success: {
@@ -70,15 +66,15 @@ export type CustomeProps = {
 };
 
 type PropsType = ReturnType<typeof mapStateToProps>;
-const CustomizedSnackbars: React.SFC<CustomeProps> = (props: CustomeProps & PropsType) => {
-  const classes = innerStyle(props.theme);
+const CustomizedSnackbars: React.FC<CustomeProps> = (props: CustomeProps & PropsType) => {
+  const { classes } = useStyles();
   const Icon = variantIcon[props.variant];
 
   return (
     <Snackbar
       anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'left',
+        vertical: 'top',
+        horizontal: 'right',
       }}
       open={props.open}
       autoHideDuration={props.closable ? 6000 : null}

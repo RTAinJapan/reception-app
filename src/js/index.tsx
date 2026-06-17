@@ -1,21 +1,31 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import './index.css';
 import App from './components/pages/App';
 import configureStore from './store';
+import * as actions from './actions';
 import * as serviceWorker from './serviceWorker';
 import { SWUpdateDialog } from './components/organisms/SWUpdateDialog';
 
-ReactDOM.render(
-  <Provider store={configureStore()}>
-    <App />
-  </Provider>,
-  document.getElementById('root'),
-);
+const store = configureStore();
 
-if ((module as any).hot) {
-  (module as any).hot.accept();
+// 通信が回復したら、保留中（未送信）の受付を自動的に再送する
+window.addEventListener('online', () => {
+  store.dispatch(actions.flushPendingAccepts());
+});
+
+const container = document.getElementById('root');
+if (container) {
+  createRoot(container).render(
+    <Provider store={store}>
+      <App />
+    </Provider>,
+  );
+}
+
+if (import.meta.hot) {
+  import.meta.hot.accept();
 }
 
 serviceWorker.register({
@@ -24,7 +34,10 @@ serviceWorker.register({
   },
   onUpdate: (registration) => {
     if (registration.waiting) {
-      ReactDOM.render(<SWUpdateDialog registration={registration} />, document.querySelector('.SW-update-dialog'));
+      const swContainer = document.querySelector('.SW-update-dialog');
+      if (swContainer) {
+        createRoot(swContainer).render(<SWUpdateDialog registration={registration} />);
+      }
     }
   },
 });

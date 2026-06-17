@@ -2,7 +2,7 @@
   font-family: 'NotoSansCJKjp';
   font-style: normal;
   font-weight: 400;
-  src: url('./font/NotoSansJP-Regular2.woff') format('woff');
+  src: url('/font/NotoSansJP-Regular2.woff') format('woff');
   font-display: swap;
 }
 
@@ -10,7 +10,7 @@
   font-family: 'NotoSansCJKjp';
   font-style: normal;
   font-weight: 700;
-  src: url('./font/NotoSansJP-Bold.otf2.woff') format('woff');
+  src: url('/font/NotoSansJP-Bold.otf2.woff') format('woff');
   font-display: swap;
 }
 
@@ -24,11 +24,16 @@ body {
   overflow-x: hidden;
   /* background: linear-gradient(180deg, #fe8ad1 0%, #eaa1cd 20%, #7fd6fd 70%, #a4f1e8 100%); */
   min-height: 100vh;
+  min-height: 100dvh;
   /* color: #737373; */
 }
 
 #root {
+  /* iOS Safari の 100vh は下部ツールバーを含む大きい高さになり、最下部の
+     カメラデバイス選択がツールバー裏に隠れる。可視領域に追従する dvh を使う
+     （非対応環境向けに 100vh をフォールバックとして先に指定） */
   height: 100vh;
+  height: 100dvh;
 }
 
 *:focus {
@@ -115,9 +120,12 @@ select {
 }
 
 .qr_reader {
-  width: 96vw;
-  margin-left: -1vw;
-  max-height: 70vh;
+  /* 縦 flex の中で残り高さにフィットさせる。min-height:0 で親をはみ出さない */
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+  background: #000;
 }
 
 .header {
@@ -171,6 +179,7 @@ select {
   max-width: 600px;
   min-width: 300px;
   height: calc(90vh - 72px);
+  height: calc(90dvh - 72px);
   overflow-y: auto;
   background-color: rgba(0, 0, 0, 0.4)
 }

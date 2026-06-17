@@ -11,7 +11,6 @@ export function* oauthDiscord() {
   const config: RootState['content']['config']['discord']['config'] = state.content.config.discord.config;
 
   const discordState = Math.random() * 100000000;
-  // eslint-disable-next-line prettier/prettier
   const url = `https://discordapp.com/api/oauth2/authorize?response_type=token&client_id=${config.clientId}&state=${discordState}&scope=${config.scope}&redirect_uri=${encodeURIComponent(config.redirectUrl)}`;
   window.location.replace(url);
 }
@@ -97,6 +96,8 @@ export function* loginCheck() {
     if (!config.discord.enable) {
       console.warn('認証スキップ');
       yield put(actions.storeDiscordUserName('テストユーザ'));
+      // 画面表示ゲート(status !== 'initialize')を満たすため、ここで status を確定させる
+      yield put(actions.updateStatus('ok'));
       return;
     } else {
       console.log('認証開始');

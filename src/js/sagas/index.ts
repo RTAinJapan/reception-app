@@ -10,6 +10,7 @@ export default function* rootSaga() {
   yield takeEvery(actions.loginDiscord, oauthDiscord);
   yield takeEvery(actions.logoutDiscord, logoutDiscord);
   yield takeEvery(actions.fetchVisitorList, fetchVisitorList);
+  yield takeEvery(actions.flushPendingAccepts, flushPendingAccepts);
 
   // DB初期設定
   yield call(initConfig);
@@ -19,6 +20,8 @@ export default function* rootSaga() {
 
   yield call(updateVisitorList);
   yield call(updateAccepted);
+  // 前回セッションで未送信のまま残った受付があれば再送を試みる
+  yield call(flushPendingAccepts);
 }
 
 /** Config取得 */
@@ -128,11 +131,63 @@ export function* postReception(action: ReturnType<typeof actions.callPostRecepti
     if (json.status === 'ok') {
       yield put(actions.updateAcceptedList(json.data));
       yield put(actions.updateStatus('ok'));
+      // 疎通が確認できたので、保留中の受付があればここで再送する
+      yield call(flushPendingAccepts);
     } else {
+      // 登録失敗をオペレーターに通知する（従来は何も表示されず失敗に気付けなかった）
+      yield put(actions.changeNotify(true, 'error', '受付の登録に失敗しました。'));
       yield put(actions.updateStatus('error'));
     }
   } catch (e) {
+    // サーバへ記録できなかった受付は失わずキューへ退避し、ローカルでは入場済みとして扱う。
+    // 事業継続を優先し、疎通回復時に自動再送する。
     console.error(e);
+    const pending: Accepted = {
+      name: action.payload.name,
+      code: action.payload.code,
+      category: action.payload.category,
+      timestamp: new Date().toISOString(),
+    };
+    yield put(actions.enqueuePendingAccept(pending));
+    yield put(actions.changeNotify(true, 'warning', 'オフラインのため受付を保留しました。通信回復時に自動送信します。'));
+  }
+}
+
+/**
+ * 保留中（未送信）の受付をサーバへ再送する。
+ * 1件でも失敗した時点で残りは次回に回す（順序を保つ）。
+ */
+export function* flushPendingAccepts() {
+  const state: RootState = yield select();
+  const pending = state.content.pendingAccepts;
+  if (!pending || pending.length === 0) {
+    return;
+  }
+
+  const baseurl = state.content.config.api.accepted;
+  const token = state.content.config.api.token;
+
+  let sent = 0;
+  for (const item of pending) {
+    try {
+      const json: { status: string; data: any } = yield call(postJson, `${baseurl}`, { name: item.name, category: item.category, code: item.code }, { 'x-app-token': token });
+      if (json.status === 'ok') {
+        yield put(actions.updateAcceptedList(json.data));
+        sent++;
+      } else {
+        // サーバ起因の失敗。残りは次回に回す
+        break;
+      }
+    } catch (e) {
+      // まだ疎通していない。残りは次回に回す
+      console.error(e);
+      break;
+    }
+  }
+
+  if (sent > 0) {
+    yield put(actions.setPendingAccepts(pending.slice(sent)));
+    yield put(actions.changeNotify(true, 'info', `保留していた受付 ${sent} 件を送信しました。`));
   }
 }
 
@@ -140,8 +195,11 @@ export function* fetchVisitorList(action: ReturnType<typeof actions.fetchVisitor
   try {
     yield call(updateVisitorList);
     yield call(updateAccepted);
+    // 手動更新のタイミングでも保留分の再送を試みる
+    yield call(flushPendingAccepts);
     yield put(actions.changeNotify(true, 'info', '更新完了'));
   } catch (e) {
-    errorHandler(e);
+    // yield を付け忘れると errorHandler が実行されない（ジェネレータが回らない）
+    yield call(errorHandler, e);
   }
 }
