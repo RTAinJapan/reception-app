@@ -1,7 +1,4 @@
-import { combineReducers } from 'redux';
-import { ActionType, getType } from 'typesafe-actions';
-import * as actions from '../actions';
-type Action = ActionType<typeof actions>;
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type DialogState = {
   /** ダイアログ表示 */
@@ -51,33 +48,41 @@ export const initial: NotifyState = {
   },
 };
 
-const reducer = (state: NotifyState = initial, action: Action): NotifyState => {
-  switch (action.type) {
-    case getType(actions.updateStatus): {
+const notifySlice = createSlice({
+  name: 'notify',
+  initialState: initial,
+  reducers: {
+    updateStatus(state, action: PayloadAction<NotifyState['status']>) {
       console.log(`updateStatus: ${action.payload}`);
-      return { ...state, status: action.payload };
-    }
-
-    case getType(actions.changeNotify): {
-      return { ...state, notify: { ...action.payload } };
-    }
-    case getType(actions.closeNotify): {
-      return { ...state, notify: { ...state.notify, show: false } };
-    }
-    case getType(actions.changeDialog): {
+      state.status = action.payload;
+    },
+    /** 通知欄表示。複数引数を受け取るため prepare でペイロードを組み立てる */
+    changeNotify: {
+      reducer(state, action: PayloadAction<NotifyState['notify']>) {
+        state.notify = action.payload;
+      },
+      prepare(show: boolean, type: 'info' | 'warning' | 'error', message: string, closable?: boolean) {
+        return { payload: { show, type, message, closable: closable === false ? false : true } };
+      },
+    },
+    /** 通知欄を閉じる */
+    closeNotify(state) {
+      state.notify.show = false;
+    },
+    /** ダイアログ表示／更新 */
+    changeDialog(state, action: PayloadAction<Partial<DialogState>>) {
       if (action.payload.show === false) {
-        return { ...state, dialog: initial.dialog };
+        state.dialog = { ...initial.dialog };
       } else {
-        return { ...state, dialog: { ...state.dialog, ...action.payload } };
+        state.dialog = { ...state.dialog, ...action.payload };
       }
-    }
-    case getType(actions.closeDialog): {
-      return { ...state, dialog: { ...initial.dialog } };
-    }
+    },
+    /** ダイアログを閉じる */
+    closeDialog(state) {
+      state.dialog = { ...initial.dialog };
+    },
+  },
+});
 
-    default:
-      return state;
-  }
-};
-
-export default reducer;
+export const { updateStatus, changeNotify, closeNotify, changeDialog, closeDialog } = notifySlice.actions;
+export default notifySlice.reducer;

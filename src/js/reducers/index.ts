@@ -1,4 +1,4 @@
-import { combineReducers } from 'redux';
+import { combineReducers } from '@reduxjs/toolkit';
 import { NotifyState } from './notify';
 import { ContentState } from './content';
 import notify from './notify';
