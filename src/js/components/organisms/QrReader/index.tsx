@@ -151,21 +151,39 @@ const App: React.FC<PropsType> = (props: PropsType) => {
       currentVideo.srcObject = null;
     }
 
-    // 1. まず getUserMedia で許可取得＆ストリーム確保（enumerateDevices より先に呼ぶのが重要）
-    let mediaStream: MediaStream;
+    // デバイス一覧を更新するヘルパー。取得の成否に関わらず一覧を表示することで、
+    // 既定/保存カメラが（仮想カメラ未起動などで）起動失敗しても、ユーザーが一覧から
+    // 動くカメラを手動選択できるようにする。
+    const refreshDeviceList = async () => {
+      try {
+        const list = (await navigator.mediaDevices.enumerateDevices()).filter((device) => device.kind === 'videoinput');
+        console.log(list);
+        setDeviceList(list);
+      } catch (e) {
+        console.warn('デバイス一覧の取得に失敗しました', e);
+      }
+    };
+
+    // 1. まず一覧を表示（PC で権限済みなら即表示。iOS は許可前で空でも return しない）
+    await refreshDeviceList();
+
+    // 2. getUserMedia で許可取得＆ストリーム確保（iOS Safari はこれでラベルも得られる）。
+    //    取得失敗してもここでは return せず、後段で一覧から手動選択できるようにする。
+    let mediaStream: MediaStream | null = null;
     try {
       mediaStream = await getMediaStream(targetDeviceId);
     } catch (e) {
       console.error('カメラを起動できませんでした', e);
-      alert('カメラを起動できませんでした。ブラウザのカメラ利用許可設定をご確認ください。');
-      return;
     }
 
-    // 2. 許可が下りた後に列挙する。ここで初めてラベルと deviceId が取得できる
-    let devices = await navigator.mediaDevices.enumerateDevices();
-    devices = devices.filter((device) => device.kind === 'videoinput');
-    console.log(devices);
-    setDeviceList(devices);
+    // 3. 許可後に一覧を更新（iOS はここでラベルが付く）
+    await refreshDeviceList();
+
+    if (!mediaStream) {
+      // 起動失敗。ユーザーは下の「カメラデバイス選択」から別カメラを選べる
+      alert('カメラを起動できませんでした。下の「カメラデバイス選択」から別のカメラを選ぶか、ブラウザのカメラ許可設定をご確認ください。');
+      return;
+    }
 
     // 3. 実際に使用中のデバイスを選択状態へ反映（ドロップダウンの表示を実態に合わせる）
     const activeDeviceId = mediaStream.getVideoTracks()[0]?.getSettings().deviceId ?? '';
