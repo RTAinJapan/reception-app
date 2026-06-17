@@ -10,6 +10,8 @@ const useStyles = makeStyles()({
   root: {
     width: '100%',
     padding: 10,
+    // padding 込みで幅が viewport を超え横スクロールが出るのを防ぐ
+    boxSizing: 'border-box',
   },
   content: {
     marginBottom: 10,
@@ -65,7 +67,7 @@ const App: React.FC<PropsType> = (props: PropsType) => {
           control={<Switch checked={props.lowSpecMode} onChange={(_event, checked) => props.updateLowSpecMode(checked)} />}
           label="軽量モード（動作が重い端末向け）"
         />
-        <Typography variant="caption" display="block">
+        <Typography variant="caption" component="p">
           解像度と走査頻度を下げて負荷を減らします。読み取りにくくなった場合や端末が熱くなる・カクつく場合に ON にしてください。
         </Typography>
       </div>
