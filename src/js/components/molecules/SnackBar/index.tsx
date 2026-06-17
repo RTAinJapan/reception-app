@@ -73,8 +73,8 @@ const CustomizedSnackbars: React.FC<CustomeProps> = (props: CustomeProps & Props
   return (
     <Snackbar
       anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'left',
+        vertical: 'top',
+        horizontal: 'right',
       }}
       open={props.open}
       autoHideDuration={props.closable ? 6000 : null}
