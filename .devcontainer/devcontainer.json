@@ -1,0 +1,22 @@
+{
+  "name": "reception-app (dev)",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/reception-app",
+  // compose の build 前にホストで reception-server を clone する（appdata/register のビルド元）
+  "initializeCommand": "bash .devcontainer/clone-server.sh",
+  // 既定で起動するサービス（register は profile:full のため含めない）
+  "runServices": ["app", "postgres", "db", "appdata"],
+  "forwardPorts": [8080, 13001, 13000],
+  "portsAttributes": {
+    "8080": { "label": "Vite dev server" },
+    "13001": { "label": "appdata API (visitor/badgeholder/accepted)" },
+    "13000": { "label": "register API (optional)" }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+    }
+  }
+}
