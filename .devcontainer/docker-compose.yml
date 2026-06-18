@@ -1,0 +1,77 @@
+services:
+  # reception-app の開発用コンテナ（VS Code がここにアタッチする）
+  app:
+    image: mcr.microsoft.com/devcontainers/typescript-node:22
+    volumes:
+      - ..:/workspaces/reception-app:cached
+    command: sleep infinity
+    networks:
+      - reception
+
+  # 共有DB本体（PostgreSQL）。初回起動時に db/init/*.sql でスキーマ＋サンプルデータを投入
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: receptiondb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - reception-pgdata:/var/lib/postgresql/data
+    networks:
+      - reception
+
+  # reception-server が参照する "db"（PostgREST）。本番は AWS RDS だがローカルは上の postgres を見る
+  db:
+    image: postgrest/postgrest
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@postgres:5432/receptiondb
+      PGRST_DB_SCHEMA: receptiondb
+      PGRST_DB_ANON_ROLE: postgres
+    depends_on:
+      - postgres
+    networks:
+      - reception
+
+  # データ取得＋受付登録を受け持つ機能部（フロントが叩くのはこれ）
+  # GET /visitor /badgeholder /accepted, POST /accepted
+  appdata:
+    build:
+      context: ./.cache/reception-server
+      dockerfile: appdata/Dockerfile
+    environment:
+      TOKEN: ''
+      DB_ENDPOINT: http://db:3000
+    ports:
+      - '13001:3000'
+    depends_on:
+      - db
+    networks:
+      - reception
+
+  # 名簿登録＋メール送信を受け持つ機能部。reception-app フロントは直接使わないため
+  # 既定では起動しない（必要なら `docker compose --profile full up register`）。
+  # AWS キーは起動時チェックを通すためのダミー。実メール送信時のみ本物が必要。
+  register:
+    profiles:
+      - full
+    build:
+      context: ./.cache/reception-server
+      dockerfile: register/Dockerfile
+    environment:
+      TOKEN: ''
+      DB_ENDPOINT: http://db:3000
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+    ports:
+      - '13000:3000'
+    depends_on:
+      - db
+    networks:
+      - reception
+
+networks:
+  reception:
+
+volumes:
+  reception-pgdata:

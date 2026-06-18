@@ -31,14 +31,14 @@
 - ビルドする（Vite を使用。出力先は `build/`）
 
 ```
-yarn
-yarn build
+npm install
+npm run build
 ```
 
 - ローカルで動作確認する場合は開発サーバーを起動する
 
 ```
-yarn dev
+npm run dev
 ```
 
 - ビルドしたファイルを好きな場所に配置する

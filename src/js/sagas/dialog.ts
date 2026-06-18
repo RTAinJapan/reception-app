@@ -1,5 +1,4 @@
 import { put, take, race } from 'redux-saga/effects';
-import { getType } from 'typesafe-actions';
 import * as actions from '../actions';
 import { DialogState } from '../reducers/notify';
 
@@ -22,8 +21,8 @@ export function* confirmSaga(message: string, type: DialogState['type'], detail?
 
   // raceでどちらが選ばれたか取得する
   const { yes } = yield race({
-    yes: take(getType(actions.dialogYes)),
-    no: take(getType(actions.dialogNo)),
+    yes: take(actions.dialogYes.type),
+    no: take(actions.dialogNo.type),
   });
   // モーダルを隠す
   yield put(actions.changeDialog({ show: false }));
@@ -50,8 +49,8 @@ export function* alertSaga(message: string, type: DialogState['type'], detail?: 
 
   // raceでどちらが選ばれたか取得する
   const { yes } = yield race({
-    yes: take(getType(actions.dialogYes)),
-    no: take(getType(actions.dialogNo)),
+    yes: take(actions.dialogYes.type),
+    no: take(actions.dialogNo.type),
   });
   // モーダルを隠す
   yield put(actions.changeDialog({ show: false }));

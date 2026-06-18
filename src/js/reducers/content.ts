@@ -1,9 +1,7 @@
-import { ActionType, getType } from 'typesafe-actions';
-import * as actions from '../actions';
+import { createSlice, current, PayloadAction } from '@reduxjs/toolkit';
 import customTheme from '../theme';
 import { Theme } from '@mui/material';
 import { Accepted, Visitor } from '../types/global';
-type Action = ActionType<typeof actions>;
 
 export type ContentState = {
   config: {
@@ -125,94 +123,57 @@ const computeAcceptedIdentifiers = (visitorList: Visitor[], acceptedList: Accept
   return list;
 };
 
-const reducer = (state: ContentState = initial, action: Action): ContentState => {
-  switch (action.type) {
-    case getType(actions.updateTheme): {
-      return {
-        ...state,
-        theme: {
-          mode: action.payload,
-          theme: customTheme(action.payload),
-        },
-      };
-    }
-
-    case getType(actions.updateConfig): {
-      return {
-        ...state,
-        config: action.payload,
-      };
-    }
-
-    case getType(actions.storeDiscordUserName): {
-      return {
-        ...state,
-        discord: {
-          ...state.discord,
-          username: action.payload,
-        },
-      };
-    }
-
-    case getType(actions.updateReaderDevice): {
-      return {
-        ...state,
-        displaySetting: {
-          ...state.displaySetting,
-          readerDeviceId: action.payload,
-        },
-      };
-    }
-
-    case getType(actions.updateLowSpecMode): {
-      return {
-        ...state,
-        displaySetting: {
-          ...state.displaySetting,
-          lowSpecMode: action.payload,
-        },
-      };
-    }
-
-    case getType(actions.updateVisitorList): {
-      return {
-        ...state,
-        visitorList: action.payload,
-      };
-    }
-
-    case getType(actions.updateAcceptedList): {
+const contentSlice = createSlice({
+  name: 'content',
+  initialState: initial,
+  reducers: {
+    updateTheme(state, action: PayloadAction<'light' | 'dark'>) {
+      state.theme = { mode: action.payload, theme: customTheme(action.payload) };
+    },
+    updateConfig(state, action: PayloadAction<ContentState['config']>) {
+      state.config = action.payload;
+    },
+    storeDiscordUserName(state, action: PayloadAction<string | null>) {
+      state.discord.username = action.payload;
+    },
+    updateReaderDevice(state, action: PayloadAction<string>) {
+      state.displaySetting.readerDeviceId = action.payload;
+    },
+    updateLowSpecMode(state, action: PayloadAction<boolean>) {
+      state.displaySetting.lowSpecMode = action.payload;
+    },
+    updateVisitorList(state, action: PayloadAction<Visitor[]>) {
+      state.visitorList = action.payload;
+    },
+    updateAcceptedList(state, action: PayloadAction<Accepted[]>) {
       // サーバの最新スナップショットに、未送信の保留分を重ねて表示用集合とする
-      const merged = dedupeByCode([...action.payload, ...state.pendingAccepts]);
-      return {
-        ...state,
-        acceptedList: merged,
-        acceptedIdentifierList: computeAcceptedIdentifiers(state.visitorList, merged),
-      };
-    }
-
-    case getType(actions.enqueuePendingAccept): {
+      const merged = dedupeByCode([...action.payload, ...current(state.pendingAccepts)]);
+      state.acceptedList = merged;
+      state.acceptedIdentifierList = computeAcceptedIdentifiers(current(state.visitorList), merged);
+    },
+    enqueuePendingAccept(state, action: PayloadAction<Accepted>) {
       // 保留キューへ積みつつ、ローカルでは即「入場済み」として扱う（オフライン継続）
-      const pendingAccepts = dedupeByCode([...state.pendingAccepts, action.payload]);
-      const acceptedList = dedupeByCode([...state.acceptedList, action.payload]);
-      return {
-        ...state,
-        pendingAccepts,
-        acceptedList,
-        acceptedIdentifierList: computeAcceptedIdentifiers(state.visitorList, acceptedList),
-      };
-    }
+      const pendingAccepts = dedupeByCode([...current(state.pendingAccepts), action.payload]);
+      const acceptedList = dedupeByCode([...current(state.acceptedList), action.payload]);
+      state.pendingAccepts = pendingAccepts;
+      state.acceptedList = acceptedList;
+      state.acceptedIdentifierList = computeAcceptedIdentifiers(current(state.visitorList), acceptedList);
+    },
+    setPendingAccepts(state, action: PayloadAction<Accepted[]>) {
+      state.pendingAccepts = action.payload;
+    },
+  },
+});
 
-    case getType(actions.setPendingAccepts): {
-      return {
-        ...state,
-        pendingAccepts: action.payload,
-      };
-    }
-
-    default:
-      return state;
-  }
-};
-
-export default reducer;
+export const {
+  updateTheme,
+  updateConfig,
+  storeDiscordUserName,
+  updateReaderDevice,
+  updateLowSpecMode,
+  updateVisitorList,
+  updateAcceptedList,
+  enqueuePendingAccept,
+  setPendingAccepts,
+} = contentSlice.actions;
+export default contentSlice.reducer;

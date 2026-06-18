@@ -24,3 +24,5 @@ yarn-debug.log*
 yarn-error.log*
 
 config.json
+# devcontainer が clone する対向サーバ
+.devcontainer/.cache/

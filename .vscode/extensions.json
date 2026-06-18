@@ -1,0 +1,5 @@
+{
+  // このプロジェクトで品質を保つために推奨する拡張機能。
+  // VS Code を開くとインストールを促される。
+  "recommendations": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+}

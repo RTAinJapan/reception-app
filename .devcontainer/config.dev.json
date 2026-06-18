@@ -1,0 +1,14 @@
+{
+  "api": {
+    "accepted": "http://localhost:13001/accepted",
+    "visitor": "http://localhost:13001/visitor",
+    "badgeholder": "http://localhost:13001/badgeholder",
+    "token": ""
+  },
+  "discord": {
+    "enable": false,
+    "config": { "baseUrl": "", "clientId": "", "redirectUrl": "", "scope": "" },
+    "guild": "",
+    "users": []
+  }
+}

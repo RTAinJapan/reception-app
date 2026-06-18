@@ -25,13 +25,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: yarn
+          cache: npm
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Run ESLint
-        run: yarn lint
+        run: npm run lint
 
   build:
     name: Build
@@ -44,13 +44,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: yarn
+          cache: npm
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -71,17 +71,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: yarn
+          cache: npm
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Cache Playwright browser
         id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install Playwright browser
         # --with-deps は apt 経由で非常に遅くハングしがち。ubuntu-latest には
@@ -90,7 +90,7 @@ jobs:
         run: npx playwright install chromium
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
       - name: Smoke test (起動時クラッシュ検出)
-        run: yarn smoke
+        run: npm run smoke

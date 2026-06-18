@@ -1,30 +1,39 @@
-import { createStore, applyMiddleware, compose } from 'redux';
+import { configureStore } from '@reduxjs/toolkit';
 import createSagaMiddleware from 'redux-saga';
-import reducer from '../reducers';
+import rootReducer from '../reducers';
 import rootSaga from '../sagas';
-import { initial } from '../reducers/notify';
+import { initial as notifyInitial } from '../reducers/notify';
 import { initial as contentInitial } from '../reducers/content';
 
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const STATE_STORAGE_KEY = 'reception_reduxState_conntent';
 
-export default function configureStore() {
+export default function setupStore() {
   const sagaMiddleware = createSagaMiddleware();
-  // const store = createStore(reducer, composeEnhancers(applyMiddleware(sagaMiddleware)));
 
+  // content を localStorage から復元（旧実装と互換のキー・形を維持）
   const stateStr = localStorage.getItem(STATE_STORAGE_KEY);
-  const persistedState = stateStr
+  const preloadedState = stateStr
     ? {
-        notify: initial as any,
+        notify: notifyInitial,
         content: {
           ...contentInitial,
           ...JSON.parse(stateStr),
         },
       }
-    : {};
+    : undefined;
 
-  const store = createStore(reducer, persistedState as any, composeEnhancers(applyMiddleware(sagaMiddleware)));
-  // 変更があったときに保存する
+  const store = configureStore({
+    reducer: rootReducer,
+    // 形は rootReducer の state と一致。theme(MUI Theme) を含むため any キャスト
+    preloadedState: preloadedState as any,
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        // state に MUI Theme(関数を含む非シリアライズ値) を保持するため serializableCheck を無効化
+        serializableCheck: false,
+      }).concat(sagaMiddleware),
+  });
+
+  // 変更があったときに content を保存する
   store.subscribe(() => {
     localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(store.getState().content));
   });
