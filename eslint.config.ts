@@ -4,6 +4,8 @@ import react from 'eslint-plugin-react';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 
+// TypeScript で記述。ESLint は jiti でこの .ts をロードする。
+// tseslint.config() は型付きヘルパーなので、設定構造やルール名にエディタ補完が効く。
 export default tseslint.config(
   {
     // ビルド成果物や依存は対象外
