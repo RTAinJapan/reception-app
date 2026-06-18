@@ -77,7 +77,10 @@ const CustomizedSnackbars: React.FC<CustomeProps> = (props: CustomeProps & Props
         horizontal: 'right',
       }}
       open={props.open}
-      autoHideDuration={props.closable ? 6000 : null}
+      autoHideDuration={props.closable ? 4000 : null}
+      // 既定ではウィンドウ非フォーカス時に自動消去タイマーが一時停止し、ページ表示直後や
+      // モバイルで消えないことがある。フォーカスに関係なく数秒で消すため無効化する。
+      disableWindowBlurListener
       onClose={props.closable ? props.onClose : undefined}
     >
       <SnackbarContent
